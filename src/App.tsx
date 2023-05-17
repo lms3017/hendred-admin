@@ -2,17 +2,16 @@ import React from 'react';
 import Login from '@components/Login';
 import { AuthContext } from '@context/authContext';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Button } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { signOut } from 'firebase/auth';
 import { auth } from '@config/firebase';
-import PortfolioManager from '@pages/portfolioManager';
-import MainPageManager from '@pages/mainPageManager';
-import NodeManager from '@pages/nodeManager';
-import ContentManager from '@pages/contentManager';
+import { menus } from '@config/routes';
+import SideBar from '@components/SideBar';
 import NotFound from '@pages/notFound';
 
 function App() {
   const userInfo = React.useContext(AuthContext);
+  const menuList = Object.values(menus);
 
   if (!userInfo) {
     return (
@@ -24,25 +23,28 @@ function App() {
   }
 
   return (
-    <>
-      <div>사이드바</div>
-      <Button variant="contained" onClick={() => signOut(auth)}>
-        임시 로그아웃
-      </Button>
-      <Routes>
-        <Route path="/" element={<PortfolioManager />} />
-        <Route path="/PortfolioManager" element={<PortfolioManager />} />
-        <Route path="/MainPageManager" element={<MainPageManager />} />
-        <Route path="/NodeManager" element={<NodeManager />} />
-        <Route path="/ContentManager" element={<ContentManager />} />
-        <Route path="/NotFound" element={<NotFound />} />
-        <Route
-          path="/login"
-          element={<Navigate replace to="/PortfolioManager" />}
-        />
-        <Route path="*" element={<Navigate replace to="/NotFound" />} />
-      </Routes>
-    </>
+    <Box sx={{ display: 'flex' }}>
+      <SideBar />
+      <Box
+        component="main"
+        sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3 }}
+      >
+        <Button variant="contained" onClick={() => signOut(auth)}>
+          임시 로그아웃
+        </Button>
+        <Routes>
+          {menuList.map((menu, index) => (
+            <Route key={index} path={menu.path} element={<menu.component />} />
+          ))}
+          <Route path="/notFound" element={<NotFound />} />
+          <Route
+            path="/login"
+            element={<Navigate replace to={menuList[0].path} />}
+          />
+          <Route path="*" element={<Navigate replace to="/notFound" />} />
+        </Routes>
+      </Box>
+    </Box>
   );
 }
 
