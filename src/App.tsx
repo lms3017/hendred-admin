@@ -12,6 +12,7 @@ import NotFound from '@pages/notFound';
 function App() {
   const userInfo = React.useContext(AuthContext);
   const menuList = Object.values(menus);
+  const defaultMenu = menuList[0];
 
   if (!userInfo) {
     return (
@@ -25,22 +26,17 @@ function App() {
   return (
     <Box sx={{ display: 'flex' }}>
       <SideBar />
-      <Box
-        component="main"
-        sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3 }}
-      >
-        <Button variant="contained" onClick={() => signOut(auth)}>
+      <Box component="main" sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3 }}>
+        {/* <Button variant="contained" onClick={() => signOut(auth)}>
           임시 로그아웃
-        </Button>
+        </Button> */}
         <Routes>
           {menuList.map((menu, index) => (
             <Route key={index} path={menu.path} element={<menu.component />} />
           ))}
+          <Route path="/" element={<defaultMenu.component />} />
           <Route path="/notFound" element={<NotFound />} />
-          <Route
-            path="/login"
-            element={<Navigate replace to={menuList[0].path} />}
-          />
+          <Route path="/login" element={<Navigate replace to={defaultMenu.path} />} />
           <Route path="*" element={<Navigate replace to="/notFound" />} />
         </Routes>
       </Box>

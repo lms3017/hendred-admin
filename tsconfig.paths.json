@@ -5,7 +5,8 @@
       "@components/*": ["src/components/*"],
       "@config/*": ["src/config/*"],
       "@pages/*": ["src/pages/*"],
-      "@context/*": ["src/context/*"]
+      "@context/*": ["src/context/*"],
+      "@services/*": ["src/services/*"]
     }
   }
 }

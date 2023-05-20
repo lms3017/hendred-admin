@@ -1,18 +1,11 @@
 import React from 'react';
-import {
-  Divider,
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Toolbar,
-} from '@mui/material';
+import { Divider, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { menus } from '@config/routes';
 import { NavLink } from 'react-router-dom';
 
 function SideBar() {
+  const theme = useTheme();
   const menuList = Object.values(menus);
   const sideBarWidth = '240px';
 
@@ -39,7 +32,7 @@ function SideBar() {
               to={menu.path}
               style={({ isActive }) => ({
                 display: 'block',
-                color: '#2b2b2b',
+                color: theme.palette.text.primary,
                 textDecoration: 'none',
                 background: isActive ? '#f1f1f1' : '',
               })}
