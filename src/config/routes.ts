@@ -1,7 +1,7 @@
 import PortfolioManager from '@pages/portfolioManager';
 import MainPageManager from '@pages/mainPageManager';
 import NodeManager from '@pages/nodeManager';
-import ContentManager from '@pages/contentManager';
+import ContentsManager from '@pages/contentsManager';
 import InboxIcon from '@mui/icons-material/MoveToInbox';
 
 const menus = {
@@ -26,7 +26,7 @@ const menus = {
   contentManager: {
     menuName: '콘텐츠 관리',
     path: '/ContentManager',
-    component: ContentManager,
+    component: ContentsManager,
     menuIcon: InboxIcon,
   },
 };
