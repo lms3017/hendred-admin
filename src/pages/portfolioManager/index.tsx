@@ -18,6 +18,7 @@ import {
   TableRow,
   TextField,
   Typography,
+  Autocomplete
 } from '@mui/material';
 import CustomTableCell from '@components/CustomTableCell';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
@@ -82,19 +83,76 @@ function PortfolioManager() {
         <Box sx={{}}>
           <DialogContent>
             <Grid container sx={{ alignItems: 'center' }}>
+              <Grid item xs={3} justifyContent={'center'}>
+                <Typography align="center" bgcolor={'lightgray'}>회사명</Typography>
+              </Grid>
+              <Grid item xs={7}>
+                <TextField placeholder="회사명을 입력해주세요" fullWidth type="companyName" margin="none" onChange={() => {}} />
+              </Grid>
               <Grid item xs={3}>
-                <Typography>회사명</Typography>
+                <Typography align="center">로고</Typography>
+                <Typography align="center" fontSize={5}>(일반 색상 버전)</Typography>
+              </Grid>
+              <Grid item xs={7}>
+                <TextField placeholder="등록된 파일이 없습니다" fullWidth type="companyName" margin="none" onChange={() => {}} />
+              </Grid>
+              <Grid item xs={2}>
+                <Button onChange={() => {}}>찾아보기...</Button>
+              </Grid>
+              <Grid item xs={3}>
+                <Typography align="center">로고</Typography>
+                <Typography align="center" fontSize={5}>(반전 색상 버전)</Typography>
+              </Grid>
+              <Grid item xs={7}>
+                <TextField placeholder="등록된 파일이 없습니다" fullWidth type="companyName" margin="none" onChange={() => {}} />
+              </Grid>
+              <Grid item xs={2}>
+                <Button onChange={() => {}}>찾아보기...</Button>
+              </Grid>
+              <Grid item xs={3}>
+                <Typography align="center">로고 배경 색상</Typography>
+              </Grid>
+              <Grid item xs={7}>
+                <TextField fullWidth type="companyName" margin="none" onChange={() => {}} />
+              </Grid>
+              <Grid item xs={3}>
+                <Typography align="center">회사 설명</Typography>
               </Grid>
               <Grid item xs={9}>
-                <TextField fullWidth type="companyName" margin="normal" onChange={() => {}} />
+                <TextField placeholder="회사 설명을 입력해주세요" fullWidth type="companyName" margin="none" onChange={() => {}} />
+              </Grid>
+              <Grid item xs={3}>
+                <Typography align="center">포트폴리오 노출</Typography>
+              </Grid>
+              <Grid item xs={9}>
+              <Autocomplete
+                options={[{label:"On", id: 1}, {label:"Off", id: 2}]}
+                renderInput={(params) => <TextField {...params} />}/>
+              </Grid>
+              <Grid item xs={3}>
+                <Typography align="center">메인페이지 노출</Typography>
+              </Grid>
+              <Grid item xs={9}>
+              <Autocomplete
+                options={[{label:"On", id: 1}, {label:"Off", id: 2}]}
+                renderInput={(params) => <TextField {...params} />}/>
+              </Grid>
+              <Grid item xs={3}>
+                <Typography align="center">링크(URL)</Typography>
+              </Grid>
+              <Grid item xs={9}>
+                <TextField fullWidth type="companyName" margin="none" onChange={() => {}} />
+              </Grid>
+              <Grid item xs={3}>
+                <Typography align="center">카테고리</Typography>
+              </Grid>
+              <Grid item xs={9}>
+                <TextField placeholder="카테고리를 입력해주세요" fullWidth type="companyName" margin="none" onChange={() => {}} />
               </Grid>
             </Grid>
-            <TextField>asdf</TextField>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClose} autoFocus>
-              등록
-            </Button>
+            <Button onClick={handleClose} autoFocus>등록</Button>
             <Button onClick={handleClose}>취소</Button>
           </DialogActions>
         </Box>
