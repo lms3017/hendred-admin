@@ -5,7 +5,7 @@ import ContentsManager from '@pages/contentsManager';
 import InboxIcon from '@mui/icons-material/MoveToInbox';
 
 const menus = {
-  tempPort: {
+  portfolioManager: {
     menuName: '포트폴리오 관리',
     path: '/PortfolioManager',
     component: PortfolioManager,
