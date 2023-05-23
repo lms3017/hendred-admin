@@ -22,7 +22,7 @@ import {
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { ContentsData } from '@types';
-import { initContentsData } from '@constants';
+import { initContentsData } from '@initData';
 import { formatDate } from '@utils/dateHandler';
 import { booleanToText } from '@utils/DataFormatter';
 import { createContents, fetchAllContents, updateDocNo } from '@services/contentsManager';

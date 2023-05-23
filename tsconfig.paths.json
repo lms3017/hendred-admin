@@ -9,7 +9,7 @@
       "@services/*": ["src/services/*"],
       "@utils/*": ["src/utils/*"],
       "@types": ["src/types"],
-      "@constants": ["src/constants"]
+      "@initData": ["src/initData"]
     }
   }
 }
