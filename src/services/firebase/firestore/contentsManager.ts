@@ -1,6 +1,6 @@
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@config/firebase';
-import { uploadImage } from '@utils/fileHandler';
+import { uploadImage } from '@services/firebase/storage/fileHandler';
 import { getCurrentDate } from '@utils/dateHandler';
 import { ContentsData } from '@types';
 

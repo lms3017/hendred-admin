@@ -25,7 +25,7 @@ import { ContentsData } from '@types';
 import { initContentsData } from '@initData';
 import { formatDate } from '@utils/dateHandler';
 import { booleanToText } from '@utils/DataFormatter';
-import { createContents, fetchAllContents, updateDocNo } from '@services/contentsManager';
+import { createContents, fetchAllContents, updateDocNo } from '@services/firebase/firestore/contentsManager';
 import CustomTableCell from '@components/CustomTableCell';
 
 function ContentsManager() {
