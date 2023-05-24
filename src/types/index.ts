@@ -1,16 +1,19 @@
 import { Timestamp } from 'firebase/firestore';
 
+type DialogModeOptions = '등록' | '수정';
+
 type ContentsData = {
-  docId: string;
-  docNo: number;
+  contentsId: string;
+  contentsNo: number;
   contentsName: string;
   contentsImageUrl: string;
+  contentsImageName: string;
   contentsImage: File | null;
   contentsDescription: string;
   isEnabledContents: boolean;
   contentsLink: string;
-  uploadDate: Timestamp | null;
-  updateDate: Timestamp | null;
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
 };
 
-export type { ContentsData };
+export type { DialogModeOptions, ContentsData };

@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
   DialogTitle,
   Grid,
+  MenuItem,
   Paper,
+  Select,
+  SelectChangeEvent,
   Stack,
   Table,
   TableBody,
@@ -21,23 +22,47 @@ import {
 } from '@mui/material';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import { ContentsData } from '@types';
+import { DialogModeOptions, ContentsData } from '@types';
 import { initContentsData } from '@initData';
-import { formatDate } from '@utils/dateHandler';
-import { booleanToText } from '@utils/DataFormatter';
-import { createContents, fetchAllContents, updateDocNo } from '@services/firebase/firestore/contentsManager';
+import { formatDate, formatDateTime } from '@utils/dateHandler';
+import { booleanToText, uniqueFileNameToFileName } from '@utils/commonUtils';
+import {
+  createContents,
+  fetchContents,
+  updateContents,
+  deleteContents,
+} from '@services/firebase/firestore/contentsManager';
 import CustomTableCell from '@components/CustomTableCell';
 
 function ContentsManager() {
   const [contentsData, setContentsData] = useState<ContentsData>(initContentsData);
   const [contentsDataList, setContentsDataList] = useState<ContentsData[] | []>([]);
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [dialogMode, setDialogMode] = React.useState<DialogModeOptions>('등록');
 
   useEffect(() => {
     getAllContents();
   }, []);
 
+  const handleOpenEditDialog = () => {
+    setIsOpen(true);
+    setDialogMode('등록');
+  };
+
+  const handleOpenUpdateDialog = (contentsId: string) => {
+    const selectedContentsData = contentsDataList.find((data) => data.contentsId === contentsId);
+    if (selectedContentsData) setContentsData(selectedContentsData);
+    setIsOpen(true);
+    setDialogMode('수정');
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+    setContentsData(initContentsData);
+  };
+
   const getAllContents = () => {
-    fetchAllContents()
+    fetchContents()
       .then((fetchDataList) => {
         setContentsDataList(fetchDataList);
       })
@@ -52,72 +77,110 @@ function ContentsManager() {
     }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
+  const handleSelectChange = (e: SelectChangeEvent<unknown>) => {
+    const { name, value } = e.target;
     setContentsData((prevContentsData) => ({
       ...prevContentsData,
-      contentsImage: file,
+      [name]: value === '표시' ? true : false,
+    }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.name;
+    const file = e.target.files?.[0] || null;
+    let uniqueFileName = '';
+    if (file) uniqueFileName = `${Date.now()}_${file.name}`;
+
+    setContentsData((prevContentsData) => ({
+      ...prevContentsData,
+      [name]: file,
+      [name + 'Name']: uniqueFileName,
     }));
   };
 
   const moveItemUp = async (id: string) => {
-    const itemIndex = contentsDataList.findIndex((item) => item.docId === id);
-    if (itemIndex > 0) {
-      const prevItem = contentsDataList[itemIndex - 1];
-      const currentItem = contentsDataList[itemIndex];
-      prevItem.docNo += 1;
-      currentItem.docNo -= 1;
-      await updateDocNo(prevItem.docId, prevItem.docNo);
-      await updateDocNo(currentItem.docId, currentItem.docNo);
-      alert('업데이트가 완료됬습니다.');
-      getAllContents();
+    try {
+      const itemIndex = contentsDataList.findIndex((item) => item.contentsId === id);
+      if (itemIndex > 0) {
+        const prevItem = contentsDataList[itemIndex - 1];
+        const currentItem = contentsDataList[itemIndex];
+        prevItem.contentsNo += 1;
+        currentItem.contentsNo -= 1;
+        await updateContents(prevItem);
+        await updateContents(currentItem);
+        alert('수정이 완료됬습니다.');
+        getAllContents();
+      }
+    } catch (error) {
+      console.error('Error pages/contentsManager/moveItemUp : ', error);
     }
   };
 
   const moveItemDown = async (id: string) => {
-    const itemIndex = contentsDataList.findIndex((item) => item.docId === id);
-    if (itemIndex < contentsDataList.length - 1) {
-      const nextItem = contentsDataList[itemIndex + 1];
-      const currentItem = contentsDataList[itemIndex];
-      nextItem.docNo -= 1;
-      currentItem.docNo += 1;
-      await updateDocNo(nextItem.docId, nextItem.docNo);
-      await updateDocNo(currentItem.docId, currentItem.docNo);
-      alert('업데이트가 완료됬습니다.');
-      getAllContents();
+    try {
+      const itemIndex = contentsDataList.findIndex((item) => item.contentsId === id);
+      if (itemIndex < contentsDataList.length - 1) {
+        const nextItem = contentsDataList[itemIndex + 1];
+        const currentItem = contentsDataList[itemIndex];
+        nextItem.contentsNo -= 1;
+        currentItem.contentsNo += 1;
+        await updateContents(nextItem);
+        await updateContents(currentItem);
+        alert('수정이 완료됬습니다.');
+        getAllContents();
+      }
+    } catch (error) {
+      console.error('Error pages/contentsManager/moveItemDown : ', error);
     }
   };
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
+  const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      //todo: test code
-      setContentsData((pref) => ({
-        ...pref,
-        contentsDescription: '컨텐츠설명 작성',
-        isEnabledContents: true,
-      }));
-
       await createContents(contentsData);
+      setContentsData(initContentsData);
       getAllContents();
+      handleClose();
+      alert('등록이 완료됬습니다.');
     } catch (error) {
-      console.error('Error pages/contentsManager/handleFormSubmit : ', error);
+      console.error('Error pages/contentsManager/handleCreateSubmit : ', error);
+    }
+  };
+
+  const handleUpdateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await updateContents(contentsData);
+      setContentsData(initContentsData);
+      getAllContents();
+      handleClose();
+      alert('수정이 완료됬습니다.');
+    } catch (error) {
+      console.error('Error pages/contentsManager/handleUpdateSubmit : ', error);
+    }
+  };
+
+  const handleDeleteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await deleteContents(contentsData.contentsId, contentsData.contentsImageName);
+      setContentsData(initContentsData);
+      getAllContents();
+      handleClose();
+      alert('삭제가 완료됬습니다.');
+    } catch (error) {
+      console.error('Error pages/contentsManager/handleDeleteSubmit : ', error);
     }
   };
 
   return (
-    <div>
-      <form onSubmit={handleFormSubmit}>
-        <input
-          type="text"
-          name="contentsName"
-          value={contentsData.contentsName}
-          onChange={handleInputChange}
-          placeholder="Name"
-        />
-        <input type="file" accept="image/*" onChange={handleFileChange} />
-        <button type="submit">Upload data</button>
-      </form>
+    <>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+        <Typography variant="h5">컨텐츠 관리</Typography>
+        <Button onClick={() => handleOpenEditDialog()} variant="contained">
+          등록
+        </Button>
+      </Stack>
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 700 }} aria-label="customized table">
           <TableHead>
@@ -133,19 +196,22 @@ function ContentsManager() {
             {contentsDataList.map((result, index) => {
               return (
                 <TableRow hover key={index}>
-                  <TableCell align="center">{result.docNo}</TableCell>
+                  <TableCell align="center">{result.contentsNo}</TableCell>
                   <TableCell align="center">
-                    <Typography onClick={() => {}} sx={{ textDecoration: 'underline', cursor: 'pointer' }}>
+                    <Typography
+                      onClick={() => handleOpenUpdateDialog(result.contentsId)}
+                      sx={{ textDecoration: 'underline', cursor: 'pointer' }}
+                    >
                       {result.contentsName}
                     </Typography>
                   </TableCell>
                   <TableCell align="center">{booleanToText(result.isEnabledContents)}</TableCell>
-                  <TableCell align="center">{result.uploadDate && formatDate(result.uploadDate)}</TableCell>
+                  <TableCell align="center">{result.createdAt && formatDate(result.createdAt)}</TableCell>
                   <TableCell align="center">
-                    <Button variant="outlined" onClick={() => moveItemUp(result.docId)} sx={{ mr: 1 }}>
+                    <Button variant="outlined" onClick={() => moveItemUp(result.contentsId)} sx={{ mr: 1 }}>
                       <KeyboardArrowUpIcon />
                     </Button>
-                    <Button variant="outlined" onClick={() => moveItemDown(result.docId)}>
+                    <Button variant="outlined" onClick={() => moveItemDown(result.contentsId)}>
                       <KeyboardArrowDownIcon />
                     </Button>
                   </TableCell>
@@ -155,7 +221,142 @@ function ContentsManager() {
           </TableBody>
         </Table>
       </TableContainer>
-    </div>
+      <Dialog open={isOpen} onClose={handleClose}>
+        <DialogTitle id="alert-dialog-title">콘텐츠 {dialogMode}</DialogTitle>
+        <DialogContent>
+          <Grid container sx={{ alignItems: 'center' }} spacing={1}>
+            <Grid item xs={3} justifyContent={'center'}>
+              <Typography align="center">회사명</Typography>
+            </Grid>
+            <Grid item xs={7}>
+              <TextField
+                placeholder="회사명을 입력해주세요"
+                fullWidth
+                type="text"
+                size="small"
+                name="contentsName"
+                value={contentsData.contentsName}
+                onChange={handleInputChange}
+              />
+            </Grid>
+            <Grid item xs={3}>
+              <Typography align="center">콘텐츠 표지</Typography>
+            </Grid>
+            <Grid item xs={7}>
+              <TextField
+                placeholder="등록된 파일이 없습니다"
+                fullWidth
+                type="text"
+                size="small"
+                value={uniqueFileNameToFileName(contentsData.contentsImageName)}
+              />
+              <input
+                accept="image/*"
+                id="file-upload"
+                type="file"
+                name="contentsImage"
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+              />
+            </Grid>
+            <Grid item xs={2}>
+              <label htmlFor="file-upload">
+                <Button variant="contained" component="span">
+                  파일 추가
+                </Button>
+              </label>
+            </Grid>
+            <Grid item xs={3}>
+              <Typography align="center">회사 설명</Typography>
+            </Grid>
+            <Grid item xs={9}>
+              <TextField
+                placeholder="회사 설명을 입력해주세요"
+                fullWidth
+                type="text"
+                name="contentsDescription"
+                size="small"
+                value={contentsData.contentsDescription}
+                onChange={handleInputChange}
+              />
+            </Grid>
+            <Grid item xs={3}>
+              <Typography align="center">콘텐츠 노출</Typography>
+            </Grid>
+            <Grid item xs={9}>
+              <Select
+                size="small"
+                name="isEnabledContents"
+                value={booleanToText(contentsData.isEnabledContents)}
+                onChange={handleSelectChange}
+              >
+                <MenuItem value={booleanToText(true)}>표시</MenuItem>
+                <MenuItem value={booleanToText(false)}>비표시</MenuItem>
+              </Select>
+            </Grid>
+            <Grid item xs={3}>
+              <Typography align="center">링크(URL)</Typography>
+            </Grid>
+            <Grid item xs={9}>
+              <TextField
+                placeholder="링크(URL)을 입력해주세요"
+                fullWidth
+                type="text"
+                size="small"
+                name="contentsLink"
+                value={contentsData.contentsLink}
+                onChange={handleInputChange}
+              />
+            </Grid>
+            {dialogMode === '수정' && (
+              <>
+                <Grid item xs={3}>
+                  <Typography align="center">최초등록일</Typography>
+                </Grid>
+                <Grid item xs={9}>
+                  <TextField
+                    fullWidth
+                    type="text"
+                    size="small"
+                    value={contentsData.createdAt && formatDateTime(contentsData.createdAt)}
+                  />
+                </Grid>
+                <Grid item xs={3}>
+                  <Typography align="center">최초수정일</Typography>
+                </Grid>
+                <Grid item xs={9}>
+                  <TextField
+                    fullWidth
+                    type="text"
+                    size="small"
+                    value={contentsData.updatedAt && formatDateTime(contentsData.updatedAt)}
+                  />
+                </Grid>
+              </>
+            )}
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center' }}>
+          {dialogMode === '등록' ? (
+            <Button onClick={handleCreateSubmit} autoFocus variant="contained">
+              등록
+            </Button>
+          ) : (
+            <>
+              <Button onClick={handleUpdateSubmit} autoFocus variant="contained">
+                수정
+              </Button>
+              <Button onClick={handleDeleteSubmit} variant="contained">
+                삭제
+              </Button>
+            </>
+          )}
+          <Button onClick={handleClose} variant="contained">
+            취소
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }
 

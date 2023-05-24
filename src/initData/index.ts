@@ -1,14 +1,15 @@
 const initContentsData = {
-  docId: '',
-  docNo: 0,
+  contentsId: '',
+  contentsNo: 0,
   contentsName: '',
   contentsImageUrl: '',
+  contentsImageName: '',
   contentsImage: null,
   contentsDescription: '',
   isEnabledContents: true,
   contentsLink: '',
-  uploadDate: null,
-  updateDate: null,
+  createdAt: null,
+  updatedAt: null,
 };
 
 export { initContentsData };

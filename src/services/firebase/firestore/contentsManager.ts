@@ -1,6 +1,6 @@
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@config/firebase';
-import { uploadImage } from '@services/firebase/storage/fileHandler';
+import { uploadImage, deleteImage } from '@services/firebase/storage/fileHandler';
 import { getCurrentDate } from '@utils/dateHandler';
 import { ContentsData } from '@types';
 
@@ -10,58 +10,67 @@ export const createContents = async (contentsData: ContentsData) => {
   try {
     const currentDate = getCurrentDate();
     if (contentsData.contentsImage) {
-      console.log(new Date());
-      const contentsImageUrl = await uploadImage(contentsData.contentsImage);
-      console.log(new Date());
+      const contentsImageUrl = await uploadImage(contentsData.contentsImage, contentsData.contentsImageName);
       contentsData.contentsImageUrl = contentsImageUrl;
       contentsData.contentsImage = null;
     }
-    const prefDocNo = await fetchDocNo();
-    contentsData.docNo = prefDocNo + 1;
-    contentsData.uploadDate = currentDate;
+    const prefContentsNo = await getContentsSize();
+    contentsData.contentsNo = prefContentsNo + 1;
+    contentsData.createdAt = currentDate;
     const docRef = await addDoc(collection(db, collectionName), contentsData);
-    console.log(new Date());
-    console.log('Success services/createContents : ', docRef.id);
+
+    contentsData.contentsId = docRef.id;
+    await updateContents(contentsData);
   } catch (error) {
-    console.error('Error services/createContents : ', error);
+    console.error('Error services/firebase/firestore/createContents : ', error);
     throw error;
   }
 };
 
-export const fetchAllContents = async (): Promise<ContentsData[]> => {
+export const fetchContents = async (): Promise<ContentsData[]> => {
   try {
     const querySnapshot = await getDocs(collection(db, collectionName));
     let result: ContentsData[] = [];
 
     querySnapshot.forEach((doc) => {
-      const docData = doc.data() as ContentsData;
-      const contentsData: ContentsData = docData;
-      contentsData.docId = doc.id;
+      const contentsData: ContentsData = doc.data() as ContentsData;
       result.push(contentsData);
     });
-    return result.sort((a, b) => a.docNo - b.docNo);
+    return result.sort((a, b) => a.contentsNo - b.contentsNo);
   } catch (error) {
-    console.error('Error services/fetchContents : ', error);
+    console.error('Error services/firebase/firestore/fetchContents : ', error);
     throw error;
   }
 };
 
-export const updateDocNo = async (docId: string, docNo: number) => {
+export const updateContents = async (newData: ContentsData) => {
   try {
-    const docRef = doc(db, collectionName, docId);
-    await updateDoc(docRef, { docNo });
+    newData.updatedAt = getCurrentDate();
+    const docRef = doc(db, collectionName, newData.contentsId);
+    await updateDoc(docRef, newData);
   } catch (error) {
-    console.error('Error services/updateDocNo : ', error);
+    console.error('Error services/firebase/firestore/updateContents : ', error);
     throw error;
   }
 };
 
-const fetchDocNo = async (): Promise<number> => {
+export const deleteContents = async (id: string, imageName: string) => {
+  try {
+    if (imageName) await deleteImage(imageName);
+    const docRef = doc(db, collectionName, id);
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.error('Error services/firebase/firestore/deleteContents : ', error);
+    throw error;
+  }
+};
+
+const getContentsSize = async (): Promise<number> => {
   try {
     const querySnapshot = await getDocs(collection(db, collectionName));
     return querySnapshot.size;
   } catch (error) {
-    console.error('Error services/fetchDocNo : ', error);
+    console.error('Error services/firebase/firestore/fetchContentsNo : ', error);
     throw error;
   }
 };
