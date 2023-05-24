@@ -44,7 +44,7 @@ function ContentsManager() {
     getAllContents();
   }, []);
 
-  const handleOpenEditDialog = () => {
+  const handleOpenCreateDialog = () => {
     setIsOpen(true);
     setDialogMode('등록');
   };
@@ -100,13 +100,14 @@ function ContentsManager() {
 
   const moveItemUp = async (id: string) => {
     try {
-      const currentItem = contentsDataList.find((item) => item.contentsId === id) as ContentsData;
-      if (currentItem.contentsNo > 1) {
-        const prevItem = contentsDataList.find(
-          (item) => item.contentsNo === currentItem.contentsNo - 1
-        ) as ContentsData;
-        prevItem.contentsNo += 1;
-        currentItem.contentsNo -= 1;
+      const itemIndex = contentsDataList.findIndex((item) => item.contentsId === id);
+      if (itemIndex > 0) {
+        const prevItem = contentsDataList[itemIndex - 1];
+        const currentItem = contentsDataList[itemIndex];
+        const prevNo = prevItem.contentsNo;
+        const currentNo = currentItem.contentsNo;
+        prevItem.contentsNo = currentNo;
+        currentItem.contentsNo = prevNo;
         await updateContents(prevItem);
         await updateContents(currentItem);
         alert('수정이 완료됬습니다.');
@@ -119,13 +120,14 @@ function ContentsManager() {
 
   const moveItemDown = async (id: string) => {
     try {
-      const currentItem = contentsDataList.find((item) => item.contentsId === id) as ContentsData;
-      if (currentItem.contentsNo < contentsDataList.length) {
-        const nextItem = contentsDataList.find(
-          (item) => item.contentsNo === currentItem.contentsNo + 1
-        ) as ContentsData;
-        currentItem.contentsNo += 1;
-        nextItem.contentsNo -= 1;
+      const itemIndex = contentsDataList.findIndex((item) => item.contentsId === id);
+      if (itemIndex < contentsDataList.length - 1) {
+        const nextItem = contentsDataList[itemIndex + 1];
+        const currentItem = contentsDataList[itemIndex];
+        const nextNo = nextItem.contentsNo;
+        const currentNo = currentItem.contentsNo;
+        nextItem.contentsNo = currentNo;
+        currentItem.contentsNo = nextNo;
         await updateContents(nextItem);
         await updateContents(currentItem);
         alert('수정이 완료됬습니다.');
@@ -179,7 +181,7 @@ function ContentsManager() {
     <>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
         <Typography variant="h5">컨텐츠 관리</Typography>
-        <Button onClick={() => handleOpenEditDialog()} variant="contained">
+        <Button onClick={() => handleOpenCreateDialog()} variant="contained">
           등록
         </Button>
       </Stack>
@@ -198,7 +200,7 @@ function ContentsManager() {
             {contentsDataList.map((result, index) => {
               return (
                 <TableRow hover key={index}>
-                  <TableCell align="center">{result.contentsNo}</TableCell>
+                  <TableCell align="center">{index + 1}</TableCell>
                   <TableCell align="center">
                     <Typography
                       onClick={() => handleOpenUpdateDialog(result.contentsId)}
