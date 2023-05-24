@@ -261,7 +261,7 @@ function ContentsManager() {
             </Grid>
             <Grid item xs={2}>
               <label htmlFor="file-upload">
-                <Button variant="contained" component="span">
+                <Button variant="contained" component="span" size="small">
                   파일 추가
                 </Button>
               </label>
