@@ -100,10 +100,11 @@ function ContentsManager() {
 
   const moveItemUp = async (id: string) => {
     try {
-      const itemIndex = contentsDataList.findIndex((item) => item.contentsId === id);
-      if (itemIndex > 0) {
-        const prevItem = contentsDataList[itemIndex - 1];
-        const currentItem = contentsDataList[itemIndex];
+      const currentItem = contentsDataList.find((item) => item.contentsId === id) as ContentsData;
+      if (currentItem.contentsNo > 1) {
+        const prevItem = contentsDataList.find(
+          (item) => item.contentsNo === currentItem.contentsNo - 1
+        ) as ContentsData;
         prevItem.contentsNo += 1;
         currentItem.contentsNo -= 1;
         await updateContents(prevItem);
@@ -118,12 +119,13 @@ function ContentsManager() {
 
   const moveItemDown = async (id: string) => {
     try {
-      const itemIndex = contentsDataList.findIndex((item) => item.contentsId === id);
-      if (itemIndex < contentsDataList.length - 1) {
-        const nextItem = contentsDataList[itemIndex + 1];
-        const currentItem = contentsDataList[itemIndex];
-        nextItem.contentsNo -= 1;
+      const currentItem = contentsDataList.find((item) => item.contentsId === id) as ContentsData;
+      if (currentItem.contentsNo < contentsDataList.length) {
+        const nextItem = contentsDataList.find(
+          (item) => item.contentsNo === currentItem.contentsNo + 1
+        ) as ContentsData;
         currentItem.contentsNo += 1;
+        nextItem.contentsNo -= 1;
         await updateContents(nextItem);
         await updateContents(currentItem);
         alert('수정이 완료됬습니다.');

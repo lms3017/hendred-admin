@@ -46,6 +46,12 @@ export const fetchContents = async (): Promise<ContentsData[]> => {
 export const updateContents = async (newData: ContentsData) => {
   try {
     newData.updatedAt = getCurrentDate();
+    if (newData.contentsImage) {
+      await deleteContents(newData.contentsId, newData.contentsImageName);
+      const contentsImageUrl = await uploadImage(newData.contentsImage, newData.contentsImageName);
+      newData.contentsImageUrl = contentsImageUrl;
+      newData.contentsImage = null;
+    }
     const docRef = doc(db, collectionName, newData.contentsId);
     await updateDoc(docRef, newData);
   } catch (error) {
