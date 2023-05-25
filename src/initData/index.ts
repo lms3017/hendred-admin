@@ -11,7 +11,7 @@ const initPortfolioData: PortfolioData = {
   portfolioInvertedLogoUrl: '',
   portfolioInvertedLogoName: '',
   portfolioInvertedLogo: null,
-  logoBackground: '',
+  logoBackground: '#ffffff',
   portfolioCompanyDescription: '',
   isEnabledPortfolio: true,
   isEnabledMainPage: true,

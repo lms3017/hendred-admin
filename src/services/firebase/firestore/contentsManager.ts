@@ -124,7 +124,7 @@ const updatedAtEqual = async (data: ContentsData) => {
       throw new Error();
     }
   } catch (error) {
-    console.error('Error services/firebase/firestore/getMaxContentsNo : ', error);
+    console.error('Error services/firebase/firestore/updatedAtEqual : ', error);
     throw error;
   }
 };
