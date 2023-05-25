@@ -1,7 +1,6 @@
 import uuid from 'react-uuid';
 import {
   collection,
-  addDoc,
   getDocs,
   doc,
   updateDoc,
@@ -10,7 +9,6 @@ import {
   query,
   orderBy,
   limit,
-  runTransaction,
   setDoc,
 } from 'firebase/firestore';
 import { db } from '@config/firebase';
