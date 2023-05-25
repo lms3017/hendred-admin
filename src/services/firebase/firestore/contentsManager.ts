@@ -1,3 +1,4 @@
+import uuid from 'react-uuid';
 import {
   collection,
   addDoc,
@@ -9,29 +10,31 @@ import {
   query,
   orderBy,
   limit,
+  runTransaction,
+  setDoc,
 } from 'firebase/firestore';
 import { db } from '@config/firebase';
 import { uploadImage, deleteImage } from '@services/firebase/storage/fileHandler';
-import { getCurrentDate, formatDateTime } from '@utils/dateHandler';
+import { getCurrentDate } from '@utils/dateHandler';
 import { ContentsData } from '@types';
 
 const collectionName = 'contents';
 
 export const createContents = async (contentsData: ContentsData) => {
+  const currentDate = getCurrentDate();
+  const docId = uuid();
+  const docRef = doc(collection(db, collectionName), docId);
   try {
-    const currentDate = getCurrentDate();
     if (contentsData.contentsImage) {
       const contentsImageUrl = await uploadImage(contentsData.contentsImage, contentsData.contentsImageName);
       contentsData.contentsImageUrl = contentsImageUrl;
       contentsData.contentsImage = null;
     }
     const prefContentsNo = await getMaxContentsNo();
+    contentsData.contentsId = docId;
     contentsData.contentsNo = prefContentsNo + 1;
     contentsData.createdAt = currentDate;
-    const docRef = await addDoc(collection(db, collectionName), contentsData);
-
-    contentsData.contentsId = docRef.id;
-    await updateContents(contentsData);
+    await setDoc(docRef, contentsData);
   } catch (error) {
     console.error('Error services/firebase/firestore/createContents : ', error);
     throw error;
@@ -55,8 +58,8 @@ export const fetchContents = async (): Promise<ContentsData[]> => {
 };
 
 export const fetchContentsById = async (id: string): Promise<ContentsData | null> => {
+  const docRef = doc(collection(db, collectionName), id);
   try {
-    const docRef = doc(db, collectionName, id);
     const docSnapshot = await getDoc(docRef);
     if (docSnapshot.exists()) {
       const data = docSnapshot.data() as ContentsData;
@@ -70,17 +73,18 @@ export const fetchContentsById = async (id: string): Promise<ContentsData | null
   }
 };
 
-export const updateContents = async (newData: ContentsData) => {
+export const updateContents = async (newData: ContentsData, prefFileName: string) => {
+  const currentDate = getCurrentDate();
+  const docRef = doc(collection(db, collectionName), newData.contentsId);
   try {
     await updatedAtEqual(newData);
-    newData.updatedAt = getCurrentDate();
+    if (prefFileName && prefFileName !== newData.contentsImageName) await deleteImage(prefFileName);
     if (newData.contentsImage) {
-      await deleteContents(newData.contentsId, newData.contentsImageName);
       const contentsImageUrl = await uploadImage(newData.contentsImage, newData.contentsImageName);
       newData.contentsImageUrl = contentsImageUrl;
       newData.contentsImage = null;
     }
-    const docRef = doc(db, collectionName, newData.contentsId);
+    newData.updatedAt = currentDate;
     await updateDoc(docRef, newData);
   } catch (error) {
     console.error('Error services/firebase/firestore/updateContents : ', error);
@@ -88,10 +92,11 @@ export const updateContents = async (newData: ContentsData) => {
   }
 };
 
-export const deleteContents = async (id: string, imageName: string) => {
+export const deleteContents = async (deleteData: ContentsData) => {
+  const docRef = doc(collection(db, collectionName), deleteData.contentsId);
   try {
-    if (imageName) await deleteImage(imageName);
-    const docRef = doc(db, collectionName, id);
+    await updatedAtEqual(deleteData);
+    if (deleteData.contentsImageName) await deleteImage(deleteData.contentsImageName);
     await deleteDoc(docRef);
   } catch (error) {
     console.error('Error services/firebase/firestore/deleteContents : ', error);
@@ -100,8 +105,8 @@ export const deleteContents = async (id: string, imageName: string) => {
 };
 
 const getMaxContentsNo = async (): Promise<number> => {
+  const q = query(collection(db, collectionName), orderBy('contentsNo', 'desc'), limit(1));
   try {
-    const q = query(collection(db, collectionName), orderBy('contentsNo', 'desc'), limit(1));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       const doc = querySnapshot.docs[0];

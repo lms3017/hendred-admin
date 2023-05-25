@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  Box,
   Button,
   Dialog,
   DialogActions,
@@ -61,12 +62,13 @@ function ContentsManager() {
     setContentsData(initContentsData);
   };
 
-  const getAllContents = () => {
-    fetchContents()
-      .then((fetchDataList) => {
-        setContentsDataList(fetchDataList);
-      })
-      .catch((error) => console.error('Error pages/contentsManager/fetchContents : ', error));
+  const getAllContents = async () => {
+    try {
+      const fetchDataList = await fetchContents();
+      setContentsDataList(fetchDataList);
+    } catch (error) {
+      console.error('Error pages/contentsManager/fetchContents : ', error);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,10 +110,10 @@ function ContentsManager() {
         const currentNo = currentItem.contentsNo;
         prevItem.contentsNo = currentNo;
         currentItem.contentsNo = prevNo;
-        await updateContents(prevItem);
-        await updateContents(currentItem);
+        await updateContents(prevItem, '');
+        await updateContents(currentItem, '');
+        await getAllContents();
         alert('수정이 완료됐습니다.');
-        getAllContents();
       }
     } catch (error) {
       console.error('Error pages/contentsManager/moveItemUp : ', error);
@@ -128,10 +130,10 @@ function ContentsManager() {
         const currentNo = currentItem.contentsNo;
         nextItem.contentsNo = currentNo;
         currentItem.contentsNo = nextNo;
-        await updateContents(nextItem);
-        await updateContents(currentItem);
+        await updateContents(nextItem, '');
+        await updateContents(currentItem, '');
+        await getAllContents();
         alert('수정이 완료됐습니다.');
-        getAllContents();
       }
     } catch (error) {
       console.error('Error pages/contentsManager/moveItemDown : ', error);
@@ -142,8 +144,8 @@ function ContentsManager() {
     e.preventDefault();
     try {
       await createContents(contentsData);
+      await getAllContents();
       setContentsData(initContentsData);
-      getAllContents();
       handleClose();
       alert('등록이 완료됐습니다.');
     } catch (error) {
@@ -154,9 +156,11 @@ function ContentsManager() {
   const handleUpdateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await updateContents(contentsData);
+      const prefFileName = contentsDataList.find((item) => item.contentsId === contentsData.contentsId)
+        ?.contentsImageName as string;
+      await updateContents(contentsData, prefFileName);
+      await getAllContents();
       setContentsData(initContentsData);
-      getAllContents();
       handleClose();
       alert('수정이 완료됐습니다.');
     } catch (error) {
@@ -167,9 +171,9 @@ function ContentsManager() {
   const handleDeleteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await deleteContents(contentsData.contentsId, contentsData.contentsImageName);
+      await deleteContents(contentsData);
+      await getAllContents();
       setContentsData(initContentsData);
-      getAllContents();
       handleClose();
       alert('삭제가 완료됐습니다.');
     } catch (error) {
@@ -178,7 +182,7 @@ function ContentsManager() {
   };
 
   return (
-    <>
+    <Box sx={{ mt: 6 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
         <Typography variant="h5">컨텐츠 관리</Typography>
         <Button onClick={() => handleOpenCreateDialog()} variant="contained">
@@ -322,18 +326,18 @@ function ContentsManager() {
                     fullWidth
                     type="text"
                     size="small"
-                    value={contentsData.createdAt && formatDateTime(contentsData.createdAt)}
+                    value={(contentsData.createdAt && formatDateTime(contentsData.createdAt)) || ''}
                   />
                 </Grid>
                 <Grid item xs={3}>
-                  <Typography align="center">최초수정일</Typography>
+                  <Typography align="center">최종수정일</Typography>
                 </Grid>
                 <Grid item xs={9}>
                   <TextField
                     fullWidth
                     type="text"
                     size="small"
-                    value={contentsData.updatedAt && formatDateTime(contentsData.updatedAt)}
+                    value={(contentsData.updatedAt && formatDateTime(contentsData.updatedAt)) || ''}
                   />
                 </Grid>
               </>
@@ -360,7 +364,7 @@ function ContentsManager() {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </Box>
   );
 }
 
