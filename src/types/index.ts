@@ -23,6 +23,21 @@ type PortfolioData = {
   updatedAt: Timestamp | null;
 };
 
+type NodeData = {
+  nodeId: string;
+  nodeNo: number;
+  nodeCompanyName: string;
+  nodeLogoUrl: string;
+  nodeLogoName: string;
+  nodeLogo: File | null;
+  nodeCompanyDescription: string;
+  nodeExtraDescription: string;
+  isEnabledNode: boolean;
+  nodeLink: string;
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+};
+
 type ContentsData = {
   contentsId: string;
   contentsNo: number;
@@ -37,4 +52,4 @@ type ContentsData = {
   updatedAt: Timestamp | null;
 };
 
-export type { PortfolioData, DialogModeOptions, ContentsData };
+export type { PortfolioData, DialogModeOptions, ContentsData, NodeData };

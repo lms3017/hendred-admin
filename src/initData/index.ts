@@ -1,4 +1,4 @@
-import { PortfolioData, ContentsData } from '@types';
+import { PortfolioData, ContentsData, NodeData } from '@types';
 
 const initPortfolioData: PortfolioData = {
   portfolioId: '',
@@ -21,6 +21,21 @@ const initPortfolioData: PortfolioData = {
   updatedAt: null,
 };
 
+const initNodeData: NodeData = {
+  nodeId: '',
+  nodeNo: 0,
+  nodeCompanyName: '',
+  nodeLogoUrl: '',
+  nodeLogoName: '',
+  nodeLogo: null,
+  nodeCompanyDescription: '',
+  nodeExtraDescription: '',
+  isEnabledNode: true,
+  nodeLink: '',
+  createdAt: null,
+  updatedAt: null,
+};
+
 const initContentsData: ContentsData = {
   contentsId: '',
   contentsNo: 0,
@@ -35,4 +50,4 @@ const initContentsData: ContentsData = {
   updatedAt: null,
 };
 
-export { initPortfolioData, initContentsData };
+export { initPortfolioData, initNodeData, initContentsData };
