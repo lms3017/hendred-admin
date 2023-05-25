@@ -32,6 +32,7 @@ export const createContents = async (contentsData: ContentsData) => {
     contentsData.contentsId = docId;
     contentsData.contentsNo = prefContentsNo + 1;
     contentsData.createdAt = currentDate;
+    contentsData.updatedAt = currentDate;
     await setDoc(docRef, contentsData);
   } catch (error) {
     console.error('Error services/firebase/firestore/createContents : ', error);
@@ -40,15 +41,16 @@ export const createContents = async (contentsData: ContentsData) => {
 };
 
 export const fetchContents = async (): Promise<ContentsData[]> => {
+  const q = query(collection(db, collectionName), orderBy('nodeNo', 'asc'));
   try {
-    const querySnapshot = await getDocs(collection(db, collectionName));
+    const querySnapshot = await getDocs(q);
     let result: ContentsData[] = [];
 
     querySnapshot.forEach((doc) => {
       const contentsData: ContentsData = doc.data() as ContentsData;
       result.push(contentsData);
     });
-    return result.sort((a, b) => a.contentsNo - b.contentsNo);
+    return result;
   } catch (error) {
     console.error('Error services/firebase/firestore/fetchContents : ', error);
     throw error;
