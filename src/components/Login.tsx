@@ -24,6 +24,7 @@ function Login() {
         console.log('로그인 성공');
       })
       .catch((e) => {
+        alert('아이디, 패스워드를 확인해 주세요.');
         console.log(e);
       });
   };

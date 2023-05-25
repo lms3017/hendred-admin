@@ -36,9 +36,7 @@ function SideBar() {
         variant="permanent"
         anchor="left"
       >
-        <Toolbar />
-        <Divider />
-        <Stack height="100%" justifyContent="space-between">
+        <Stack sx={{ mt: 6 }} height="100%" justifyContent="space-between">
           <List>
             {menuList.map((menu, index) => (
               <NavLink
