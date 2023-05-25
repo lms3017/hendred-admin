@@ -10,9 +10,9 @@ type PortfolioData = {
   portfolioLogoUrl: string;
   portfolioLogoName: string;
   portfolioLogo: File | null;
-  portfolioInvertedLogoUrl: string;
-  portfolioInvertedLogoName: string;
-  portfolioInvertedLogo: File | null;
+  portfolioInvLogoUrl: string;
+  portfolioInvLogoName: string;
+  portfolioInvLogo: File | null;
   logoBackground: string;
   portfolioCompanyDescription: string;
   isEnabledPortfolio: boolean;

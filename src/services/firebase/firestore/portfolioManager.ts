@@ -1,6 +1,6 @@
+import uuid from 'react-uuid';
 import {
   collection,
-  addDoc,
   getDocs,
   doc,
   updateDoc,
@@ -9,41 +9,38 @@ import {
   query,
   orderBy,
   limit,
+  setDoc,
 } from 'firebase/firestore';
 import { db } from '@config/firebase';
 import { uploadImage, deleteImage } from '@services/firebase/storage/fileHandler';
-import { getCurrentDate, formatDateTime } from '@utils/dateHandler';
+import { getCurrentDate } from '@utils/dateHandler';
 import { PortfolioData } from '@types';
 
 const collectionName = 'portfolio';
 
 export const createPortfolio = async (portfolioData: PortfolioData) => {
+  const currentDate = getCurrentDate();
+  const docId = uuid();
+  const docRef = doc(collection(db, collectionName), docId);
   try {
-    const currentDate = getCurrentDate();
     if (portfolioData.portfolioLogo) {
-      // logo
       const portfolioLogoUrl = await uploadImage(portfolioData.portfolioLogo, portfolioData.portfolioLogoName);
       portfolioData.portfolioLogoUrl = portfolioLogoUrl;
       portfolioData.portfolioLogo = null;
     }
-    if (portfolioData.portfolioInvertedLogo) {
-      // invertedLogo
-      const portfolioInvertedLogoUrl = await uploadImage(
-        portfolioData.portfolioInvertedLogo,
-        portfolioData.portfolioInvertedLogoName
-      );
-      portfolioData.portfolioInvertedLogoUrl = portfolioInvertedLogoUrl;
-      portfolioData.portfolioInvertedLogo = null;
+    if (portfolioData.portfolioInvLogo) {
+      const portfolioInvLogoUrl = await uploadImage(portfolioData.portfolioInvLogo, portfolioData.portfolioInvLogoName);
+      portfolioData.portfolioInvLogoUrl = portfolioInvLogoUrl;
+      portfolioData.portfolioInvLogo = null;
     }
-    const prefPortfolioNo = await getMaxPortfolioNo();
+    const prefPortfolioNo = await getMaxNo('portfolioNo');
+    const prefMainPageNo = await getMaxNo('mainPageNo');
+    portfolioData.portfolioId = docId;
     portfolioData.portfolioNo = prefPortfolioNo + 1;
-    const prefMainpageNo = await getMaxMainpageNo();
-    portfolioData.mainPageNo = prefMainpageNo + 1;
+    portfolioData.mainPageNo = prefMainPageNo + 1;
     portfolioData.createdAt = currentDate;
-    const docRef = await addDoc(collection(db, collectionName), portfolioData);
-
-    portfolioData.portfolioId = docRef.id;
-    await updatePortfolio(portfolioData);
+    portfolioData.updatedAt = currentDate;
+    await setDoc(docRef, portfolioData);
   } catch (error) {
     console.error('Error services/firebase/firestore/createPortfolio : ', error);
     throw error;
@@ -51,15 +48,16 @@ export const createPortfolio = async (portfolioData: PortfolioData) => {
 };
 
 export const fetchPortfolio = async (): Promise<PortfolioData[]> => {
+  const q = query(collection(db, collectionName), orderBy('portfolioNo', 'asc'));
   try {
-    const querySnapshot = await getDocs(collection(db, collectionName));
+    const querySnapshot = await getDocs(q);
     let result: PortfolioData[] = [];
 
     querySnapshot.forEach((doc) => {
       const portfolioData: PortfolioData = doc.data() as PortfolioData;
       result.push(portfolioData);
     });
-    return result.sort((a, b) => a.portfolioNo - b.portfolioNo);
+    return result;
   } catch (error) {
     console.error('Error services/firebase/firestore/fetchPortfolio : ', error);
     throw error;
@@ -67,8 +65,8 @@ export const fetchPortfolio = async (): Promise<PortfolioData[]> => {
 };
 
 export const fetchPortfolioById = async (id: string): Promise<PortfolioData | null> => {
+  const docRef = doc(collection(db, collectionName), id);
   try {
-    const docRef = doc(db, collectionName, id);
     const docSnapshot = await getDoc(docRef);
     if (docSnapshot.exists()) {
       const data = docSnapshot.data() as PortfolioData;
@@ -82,28 +80,28 @@ export const fetchPortfolioById = async (id: string): Promise<PortfolioData | nu
   }
 };
 
-export const updatePortfolio = async (newData: PortfolioData) => {
+export const updatePortfolio = async (
+  newData: PortfolioData,
+  prefLogoName: string = '',
+  prefInvLogoName: string = ''
+) => {
+  const currentDate = getCurrentDate();
+  const docRef = doc(collection(db, collectionName), newData.portfolioId);
   try {
     await updatedAtEqual(newData);
-    newData.updatedAt = getCurrentDate();
-    if (newData.portfolioLogo || newData.portfolioInvertedLogoName) {
-      await deletePortfolio(newData.portfolioId, newData.portfolioLogoName, newData.portfolioInvertedLogoName);
-      if (newData.portfolioLogo) {
-        const portfolioLogoUrl = await uploadImage(newData.portfolioLogo, newData.portfolioLogoName);
-        newData.portfolioLogoUrl = portfolioLogoUrl;
-        newData.portfolioLogo = null;
-      }
-      if (newData.portfolioInvertedLogo) {
-        const portfolioInvertedLogoUrl = await uploadImage(
-          newData.portfolioInvertedLogo,
-          newData.portfolioInvertedLogoName
-        );
-        newData.portfolioInvertedLogoUrl = portfolioInvertedLogoUrl;
-        newData.portfolioInvertedLogo = null;
-      }
+    if (prefLogoName && prefLogoName !== newData.portfolioLogoName) await deleteImage(prefLogoName);
+    if (prefInvLogoName && prefInvLogoName !== newData.portfolioInvLogoName) await deleteImage(prefInvLogoName);
+    if (newData.portfolioLogo) {
+      const portfolioLogoUrl = await uploadImage(newData.portfolioLogo, newData.portfolioLogoName);
+      newData.portfolioLogoUrl = portfolioLogoUrl;
+      newData.portfolioLogo = null;
     }
-
-    const docRef = doc(db, collectionName, newData.portfolioId);
+    if (newData.portfolioInvLogo) {
+      const portfolioLogoUrl = await uploadImage(newData.portfolioInvLogo, newData.portfolioInvLogoName);
+      newData.portfolioInvLogoUrl = portfolioLogoUrl;
+      newData.portfolioInvLogo = null;
+    }
+    newData.updatedAt = currentDate;
     await updateDoc(docRef, newData);
   } catch (error) {
     console.error('Error services/firebase/firestore/updatePortfolio : ', error);
@@ -111,11 +109,12 @@ export const updatePortfolio = async (newData: PortfolioData) => {
   }
 };
 
-export const deletePortfolio = async (id: string, logoName: string, invertedLogo: string) => {
+export const deletePortfolio = async (deleteData: PortfolioData) => {
+  const docRef = doc(collection(db, collectionName), deleteData.portfolioId);
   try {
-    if (logoName) await deleteImage(logoName);
-    if (invertedLogo) await deleteImage(invertedLogo);
-    const docRef = doc(db, collectionName, id);
+    await updatedAtEqual(deleteData);
+    if (deleteData.portfolioLogoName) await deleteImage(deleteData.portfolioLogoName);
+    if (deleteData.portfolioInvLogoName) await deleteImage(deleteData.portfolioInvLogoName);
     await deleteDoc(docRef);
   } catch (error) {
     console.error('Error services/firebase/firestore/deletePortfolio : ', error);
@@ -123,36 +122,19 @@ export const deletePortfolio = async (id: string, logoName: string, invertedLogo
   }
 };
 
-const getMaxPortfolioNo = async (): Promise<number> => {
+const getMaxNo = async (name: string): Promise<number> => {
+  const q = query(collection(db, collectionName), orderBy(name, 'desc'), limit(1));
   try {
-    const q = query(collection(db, collectionName), orderBy('portfolioNo', 'desc'), limit(1));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       const doc = querySnapshot.docs[0];
-      const maxValue = doc.get('portfolioNo');
+      const maxValue = doc.get(name);
       return maxValue;
     } else {
       return 0;
     }
   } catch (error) {
-    console.error('Error services/firebase/firestore/getMaxPortfolioNo : ', error);
-    throw error;
-  }
-};
-
-const getMaxMainpageNo = async (): Promise<number> => {
-  try {
-    const q = query(collection(db, collectionName), orderBy('MainpageNo', 'desc'), limit(1));
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-      const doc = querySnapshot.docs[0];
-      const maxValue = doc.get('MainpageNo');
-      return maxValue;
-    } else {
-      return 0;
-    }
-  } catch (error) {
-    console.error('Error services/firebase/firestore/getMaxMainpageNo : ', error);
+    console.error('Error services/firebase/firestore/getMaxNo : ', error);
     throw error;
   }
 };

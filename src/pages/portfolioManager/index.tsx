@@ -5,10 +5,11 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
   DialogTitle,
   Grid,
+  MenuItem,
   Paper,
+  Select,
   SelectChangeEvent,
   Stack,
   Table,
@@ -19,42 +20,33 @@ import {
   TableRow,
   TextField,
   Typography,
-  Select,
-  MenuItem,
 } from '@mui/material';
-import { MuiColorInput } from 'mui-color-input';
-import CustomTableCell from '@components/CustomTableCell';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import { booleanToText, uniqueFileNameToFileName } from '@utils/commonUtils';
+import { DialogModeOptions, PortfolioData } from '@types';
 import { initPortfolioData } from '@initData';
 import { formatDate, formatDateTime } from '@utils/dateHandler';
-import { DialogModeOptions, PortfolioData } from '@types';
+import { booleanToText, uniqueFileNameToFileName } from '@utils/commonUtils';
 import {
   createPortfolio,
   fetchPortfolio,
   updatePortfolio,
   deletePortfolio,
 } from '@services/firebase/firestore/portfolioManager';
-import { updateContents } from '@services/firebase/firestore/contentsManager';
+import CustomTableCell from '@components/CustomTableCell';
+import Loading from '@components/Loading';
+import { MuiColorInput } from 'mui-color-input';
 
 function PortfolioManager() {
   const [portfolioData, setPortfolioData] = React.useState<PortfolioData>(initPortfolioData);
   const [portfolioDataList, setPortfolioDataList] = React.useState<PortfolioData[] | []>([]);
-  const [open, setIsOpen] = React.useState(false);
-  const [mode, setDialogMode] = React.useState<DialogModeOptions>('등록');
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [dialogMode, setDialogMode] = React.useState<DialogModeOptions>('등록');
 
   React.useEffect(() => {
     getAllPortfolio();
   }, []);
-
-  const handleColorChange = (color: string) => {
-    // const { name, value } = e.target;
-    setPortfolioData((prevPortfolioData) => ({
-      ...prevPortfolioData,
-      logoBackground: color,
-    }));
-  };
 
   const handleOpenCreateDialog = () => {
     setIsOpen(true);
@@ -73,12 +65,16 @@ function PortfolioManager() {
     setPortfolioData(initPortfolioData);
   };
 
-  const getAllPortfolio = () => {
-    fetchPortfolio()
-      .then((fetchDataList) => {
-        setPortfolioDataList(fetchDataList);
-      })
-      .catch((error) => console.error('Error pages/contentsManager/fetchContents : ', error));
+  const getAllPortfolio = async () => {
+    try {
+      setIsLoading(true);
+      const fetchDataList = await fetchPortfolio();
+      setPortfolioDataList(fetchDataList);
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+      console.error('Error pages/portfolioManager/fetchPortfolio : ', error);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,6 +90,13 @@ function PortfolioManager() {
     setPortfolioData((prevPortfolioData) => ({
       ...prevPortfolioData,
       [name]: value === '표시' ? true : false,
+    }));
+  };
+
+  const handleColorChange = (color: string) => {
+    setPortfolioData((prevPortfolioData) => ({
+      ...prevPortfolioData,
+      logoBackground: color,
     }));
   };
 
@@ -114,6 +117,7 @@ function PortfolioManager() {
     try {
       const itemIndex = portfolioDataList.findIndex((item) => item.portfolioId === id);
       if (itemIndex > 0) {
+        setIsLoading(true);
         const prevItem = portfolioDataList[itemIndex - 1];
         const currentItem = portfolioDataList[itemIndex];
         const prevNo = prevItem.portfolioNo;
@@ -122,18 +126,21 @@ function PortfolioManager() {
         currentItem.portfolioNo = prevNo;
         await updatePortfolio(prevItem);
         await updatePortfolio(currentItem);
-        alert('수정이 완료됐습니다.');
-        getAllPortfolio();
+        await getAllPortfolio();
+        setIsLoading(false);
       }
     } catch (error) {
-      console.error('Error pages/contentsManager/moveItemUp : ', error);
+      setIsLoading(false);
+      console.error('Error pages/portfolioManager/moveItemUp : ', error);
     }
   };
 
   const moveItemDown = async (id: string) => {
     try {
+      setIsLoading(true);
       const itemIndex = portfolioDataList.findIndex((item) => item.portfolioId === id);
       if (itemIndex < portfolioDataList.length - 1) {
+        setIsLoading(true);
         const nextItem = portfolioDataList[itemIndex + 1];
         const currentItem = portfolioDataList[itemIndex];
         const nextNo = nextItem.portfolioNo;
@@ -142,59 +149,69 @@ function PortfolioManager() {
         currentItem.portfolioNo = nextNo;
         await updatePortfolio(nextItem);
         await updatePortfolio(currentItem);
-        alert('수정이 완료됐습니다.');
-        getAllPortfolio();
+        await getAllPortfolio();
+        setIsLoading(false);
       }
     } catch (error) {
-      console.error('Error pages/contentsManager/moveItemDown : ', error);
+      setIsLoading(false);
+      console.error('Error pages/portfolioManager/moveItemDown : ', error);
     }
   };
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setIsLoading(true);
       await createPortfolio(portfolioData);
-      setPortfolioData(initPortfolioData);
-      getAllPortfolio();
+      await getAllPortfolio();
       handleClose();
+      setPortfolioData(initPortfolioData);
       alert('등록이 완료됐습니다.');
+      setIsLoading(false);
     } catch (error) {
-      console.error('Error pages/contentsManager/handleCreateSubmit : ', error);
+      setIsLoading(false);
+      console.error('Error pages/portfolioManager/handleCreateSubmit : ', error);
     }
   };
 
   const handleUpdateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await updatePortfolio(portfolioData);
-      setPortfolioData(initPortfolioData);
-      getAllPortfolio();
+      setIsLoading(true);
+      const prefItem = portfolioDataList.find((item) => item.portfolioId === portfolioData.portfolioId);
+      const prefLogoName = prefItem ? prefItem.portfolioLogoName : '';
+      const prefInvLogoName = prefItem ? prefItem.portfolioInvLogoName : '';
+      await updatePortfolio(portfolioData, prefLogoName, prefInvLogoName);
+      await getAllPortfolio();
       handleClose();
+      setPortfolioData(initPortfolioData);
       alert('수정이 완료됐습니다.');
+      setIsLoading(false);
     } catch (error) {
-      console.error('Error pages/contentsManager/handleUpdateSubmit : ', error);
+      setIsLoading(false);
+      console.error('Error pages/portfolioManager/handleUpdateSubmit : ', error);
     }
   };
 
   const handleDeleteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await deletePortfolio(
-        portfolioData.portfolioId,
-        portfolioData.portfolioLogoName,
-        portfolioData.portfolioInvertedLogoName
-      );
-      setPortfolioData(initPortfolioData);
-      getAllPortfolio();
+      setIsLoading(true);
+      await deletePortfolio(portfolioData);
+      await getAllPortfolio();
       handleClose();
+      setPortfolioData(initPortfolioData);
       alert('삭제가 완료됐습니다.');
+      setIsLoading(false);
     } catch (error) {
-      console.error('Error pages/contentsManager/handleDeleteSubmit : ', error);
+      setIsLoading(false);
+      console.error('Error pages/portfolioManager/handleDeleteSubmit : ', error);
     }
   };
 
   return (
     <Box sx={{ mt: 6 }}>
+      <Loading isLoading={isLoading} />
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
         <Typography variant="h5">포트폴리오 관리</Typography>
         <Button onClick={() => handleOpenCreateDialog()} variant="contained">
@@ -205,7 +222,7 @@ function PortfolioManager() {
         <Table sx={{ minWidth: 700 }} aria-label="customized table">
           <TableHead>
             <TableRow>
-              <CustomTableCell align="center">순서</CustomTableCell>
+              <CustomTableCell align="center">번호</CustomTableCell>
               <CustomTableCell align="center">회사명</CustomTableCell>
               <CustomTableCell align="center">포트폴리오 노출</CustomTableCell>
               <CustomTableCell align="center">등록일</CustomTableCell>
@@ -241,8 +258,8 @@ function PortfolioManager() {
           </TableBody>
         </Table>
       </TableContainer>
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle id="alert-dialog-title">포트폴리오 {mode}</DialogTitle>
+      <Dialog open={isOpen} onClose={handleClose}>
+        <DialogTitle id="alert-dialog-title">포트폴리오 {dialogMode}</DialogTitle>
         <DialogContent>
           <Grid container sx={{ alignItems: 'center' }} spacing={1}>
             <Grid item xs={3} justifyContent={'center'}>
@@ -275,7 +292,7 @@ function PortfolioManager() {
               />
               <input
                 accept="image/*"
-                id="file-upload"
+                id="portfolioLogo"
                 type="file"
                 name="portfolioLogo"
                 style={{ display: 'none' }}
@@ -283,7 +300,7 @@ function PortfolioManager() {
               />
             </Grid>
             <Grid item xs={2}>
-              <label htmlFor="file-upload">
+              <label htmlFor="portfolioLogo">
                 <Button variant="contained" component="span" size="small">
                   찾아보기
                 </Button>
@@ -301,19 +318,19 @@ function PortfolioManager() {
                 fullWidth
                 type="text"
                 size="small"
-                value={uniqueFileNameToFileName(portfolioData.portfolioInvertedLogoName)}
+                value={uniqueFileNameToFileName(portfolioData.portfolioInvLogoName)}
               />
               <input
                 accept="image/*"
-                id="file-upload"
+                id="portfolioInvLogo"
                 type="file"
-                name="portfolioInvertedLogo"
+                name="portfolioInvLogo"
                 style={{ display: 'none' }}
                 onChange={handleFileChange}
               />
             </Grid>
             <Grid item xs={2}>
-              <label htmlFor="file-upload">
+              <label htmlFor="portfolioInvLogo">
                 <Button variant="contained" component="span" size="small">
                   찾아보기
                 </Button>
@@ -400,7 +417,7 @@ function PortfolioManager() {
                 onChange={handleInputChange}
               />
             </Grid>
-            {mode === '수정' && (
+            {dialogMode === '수정' && (
               <>
                 <Grid item xs={3}>
                   <Typography align="center">최초등록일</Typography>
@@ -410,18 +427,18 @@ function PortfolioManager() {
                     fullWidth
                     type="text"
                     size="small"
-                    value={portfolioData.createdAt && formatDateTime(portfolioData.createdAt)}
+                    value={(portfolioData.createdAt && formatDateTime(portfolioData.createdAt)) || ''}
                   />
                 </Grid>
                 <Grid item xs={3}>
-                  <Typography align="center">최초수정일</Typography>
+                  <Typography align="center">최종수정일</Typography>
                 </Grid>
                 <Grid item xs={9}>
                   <TextField
                     fullWidth
                     type="text"
                     size="small"
-                    value={portfolioData.updatedAt && formatDateTime(portfolioData.updatedAt)}
+                    value={(portfolioData.updatedAt && formatDateTime(portfolioData.updatedAt)) || ''}
                   />
                 </Grid>
               </>
@@ -429,7 +446,7 @@ function PortfolioManager() {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center' }}>
-          {mode === '등록' ? (
+          {dialogMode === '등록' ? (
             <Button onClick={handleCreateSubmit} autoFocus variant="contained">
               등록
             </Button>
