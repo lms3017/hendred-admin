@@ -34,11 +34,13 @@ import {
   deleteContents,
 } from '@services/firebase/firestore/contentsManager';
 import CustomTableCell from '@components/CustomTableCell';
+import Loading from '@components/Loading';
 
 function ContentsManager() {
   const [contentsData, setContentsData] = useState<ContentsData>(initContentsData);
   const [contentsDataList, setContentsDataList] = useState<ContentsData[] | []>([]);
   const [isOpen, setIsOpen] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
   const [dialogMode, setDialogMode] = React.useState<DialogModeOptions>('등록');
 
   useEffect(() => {
@@ -64,8 +66,10 @@ function ContentsManager() {
 
   const getAllContents = async () => {
     try {
+      setIsLoading(true);
       const fetchDataList = await fetchContents();
       setContentsDataList(fetchDataList);
+      setIsLoading(false);
     } catch (error) {
       console.error('Error pages/contentsManager/fetchContents : ', error);
     }
@@ -104,6 +108,7 @@ function ContentsManager() {
     try {
       const itemIndex = contentsDataList.findIndex((item) => item.contentsId === id);
       if (itemIndex > 0) {
+        setIsLoading(true);
         const prevItem = contentsDataList[itemIndex - 1];
         const currentItem = contentsDataList[itemIndex];
         const prevNo = prevItem.contentsNo;
@@ -113,7 +118,7 @@ function ContentsManager() {
         await updateContents(prevItem, '');
         await updateContents(currentItem, '');
         await getAllContents();
-        alert('수정이 완료됐습니다.');
+        setIsLoading(false);
       }
     } catch (error) {
       console.error('Error pages/contentsManager/moveItemUp : ', error);
@@ -124,6 +129,7 @@ function ContentsManager() {
     try {
       const itemIndex = contentsDataList.findIndex((item) => item.contentsId === id);
       if (itemIndex < contentsDataList.length - 1) {
+        setIsLoading(true);
         const nextItem = contentsDataList[itemIndex + 1];
         const currentItem = contentsDataList[itemIndex];
         const nextNo = nextItem.contentsNo;
@@ -133,7 +139,7 @@ function ContentsManager() {
         await updateContents(nextItem, '');
         await updateContents(currentItem, '');
         await getAllContents();
-        alert('수정이 완료됐습니다.');
+        setIsLoading(false);
       }
     } catch (error) {
       console.error('Error pages/contentsManager/moveItemDown : ', error);
@@ -143,11 +149,13 @@ function ContentsManager() {
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setIsLoading(true);
       await createContents(contentsData);
       await getAllContents();
-      setContentsData(initContentsData);
       handleClose();
+      setContentsData(initContentsData);
       alert('등록이 완료됐습니다.');
+      setIsLoading(false);
     } catch (error) {
       console.error('Error pages/contentsManager/handleCreateSubmit : ', error);
     }
@@ -156,13 +164,15 @@ function ContentsManager() {
   const handleUpdateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setIsLoading(true);
       const prefFileName = contentsDataList.find((item) => item.contentsId === contentsData.contentsId)
         ?.contentsImageName as string;
       await updateContents(contentsData, prefFileName);
       await getAllContents();
-      setContentsData(initContentsData);
       handleClose();
+      setContentsData(initContentsData);
       alert('수정이 완료됐습니다.');
+      setIsLoading(false);
     } catch (error) {
       console.error('Error pages/contentsManager/handleUpdateSubmit : ', error);
     }
@@ -171,11 +181,13 @@ function ContentsManager() {
   const handleDeleteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setIsLoading(true);
       await deleteContents(contentsData);
       await getAllContents();
-      setContentsData(initContentsData);
       handleClose();
+      setContentsData(initContentsData);
       alert('삭제가 완료됐습니다.');
+      setIsLoading(false);
     } catch (error) {
       console.error('Error pages/contentsManager/handleDeleteSubmit : ', error);
     }
@@ -183,6 +195,7 @@ function ContentsManager() {
 
   return (
     <Box sx={{ mt: 6 }}>
+      <Loading isLoading={isLoading} />
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
         <Typography variant="h5">컨텐츠 관리</Typography>
         <Button onClick={() => handleOpenCreateDialog()} variant="contained">
