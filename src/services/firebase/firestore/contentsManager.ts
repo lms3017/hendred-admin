@@ -28,7 +28,7 @@ export const createContents = async (contentsData: ContentsData) => {
       contentsData.contentsImageUrl = contentsImageUrl;
       contentsData.contentsImage = null;
     }
-    const prefContentsNo = await getMaxContentsNo();
+    const prefContentsNo = await getMaxNo('contentsNo');
     contentsData.contentsId = docId;
     contentsData.contentsNo = prefContentsNo + 1;
     contentsData.createdAt = currentDate;
@@ -104,19 +104,19 @@ export const deleteContents = async (deleteData: ContentsData) => {
   }
 };
 
-const getMaxContentsNo = async (): Promise<number> => {
-  const q = query(collection(db, collectionName), orderBy('contentsNo', 'desc'), limit(1));
+const getMaxNo = async (name: string): Promise<number> => {
+  const q = query(collection(db, collectionName), orderBy(name, 'desc'), limit(1));
   try {
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       const doc = querySnapshot.docs[0];
-      const maxValue = doc.get('contentsNo');
+      const maxValue = doc.get(name);
       return maxValue;
     } else {
       return 0;
     }
   } catch (error) {
-    console.error('Error services/firebase/firestore/getMaxContentsNo : ', error);
+    console.error('Error services/firebase/firestore/getMaxNo : ', error);
     throw error;
   }
 };

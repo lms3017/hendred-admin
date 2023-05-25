@@ -28,7 +28,7 @@ export const createNode = async (nodeData: NodeData) => {
       nodeData.nodeLogoUrl = nodeLogoUrl;
       nodeData.nodeLogo = null;
     }
-    const prefNodeNo = await getMaxNodeNo();
+    const prefNodeNo = await getMaxNo('nodeNo');
     nodeData.nodeId = docId;
     nodeData.nodeNo = prefNodeNo + 1;
     nodeData.createdAt = currentDate;
@@ -104,19 +104,19 @@ export const deleteNode = async (deleteData: NodeData) => {
   }
 };
 
-const getMaxNodeNo = async (): Promise<number> => {
-  const q = query(collection(db, collectionName), orderBy('nodeNo', 'desc'), limit(1));
+const getMaxNo = async (name: string): Promise<number> => {
+  const q = query(collection(db, collectionName), orderBy(name, 'desc'), limit(1));
   try {
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       const doc = querySnapshot.docs[0];
-      const maxValue = doc.get('nodeNo');
+      const maxValue = doc.get(name);
       return maxValue;
     } else {
       return 0;
     }
   } catch (error) {
-    console.error('Error services/firebase/firestore/getMaxNodeNo : ', error);
+    console.error('Error services/firebase/firestore/getMaxNo : ', error);
     throw error;
   }
 };
