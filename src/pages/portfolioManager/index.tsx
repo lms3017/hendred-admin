@@ -9,6 +9,7 @@ import {
   DialogTitle,
   Grid,
   Paper,
+  SelectChangeEvent,
   Stack,
   Table,
   TableBody,
@@ -18,37 +19,185 @@ import {
   TableRow,
   TextField,
   Typography,
-  Autocomplete,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { MuiColorInput } from 'mui-color-input';
 import CustomTableCell from '@components/CustomTableCell';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import { booleanToText, uniqueFileNameToFileName } from '@utils/commonUtils';
+import { initPortfolioData } from '@initData';
+import { formatDate, formatDateTime } from '@utils/dateHandler';
+import { DialogModeOptions, PortfolioData } from '@types';
+import {
+  createPortfolio,
+  fetchPortfolio,
+  updatePortfolio,
+  deletePortfolio,
+} from '@services/firebase/firestore/portfolioManager';
+import { updateContents } from '@services/firebase/firestore/contentsManager';
 
 function PortfolioManager() {
-  const [open, isOpen] = React.useState(false);
-  const [mode, setDialogMode] = React.useState<'등록' | '수정'>('등록');
-  const [value, setValue] = React.useState('#000');
+  const [portfolioData, setPortfolioData] = React.useState<PortfolioData>(initPortfolioData);
+  const [portfolioDataList, setPortfolioDataList] = React.useState<PortfolioData[] | []>([]);
+  const [open, setIsOpen] = React.useState(false);
+  const [mode, setDialogMode] = React.useState<DialogModeOptions>('등록');
 
-  const handleChange = (newValue: string) => {
-    setValue(newValue);
+  React.useEffect(() => {
+    getAllPortfolio();
+  }, []);
+
+  const handleColorChange = (color: string) => {
+    // const { name, value } = e.target;
+    setPortfolioData((prevPortfolioData) => ({
+      ...prevPortfolioData,
+      logoBackground: color,
+    }));
   };
 
-  const handleClickOpen = (mode: '등록' | '수정') => {
-    isOpen(true);
-    setDialogMode(mode);
+  const handleOpenCreateDialog = () => {
+    setIsOpen(true);
+    setDialogMode('등록');
+  };
+
+  const handleOpenUpdateDialog = (portfolioId: string) => {
+    const selectedPortfolioData = portfolioDataList.find((data) => data.portfolioId === portfolioId);
+    if (selectedPortfolioData) setPortfolioData(selectedPortfolioData);
+    setIsOpen(true);
+    setDialogMode('수정');
   };
 
   const handleClose = () => {
-    isOpen(false);
-    setValue('#ffffff');
+    setIsOpen(false);
+    setPortfolioData(initPortfolioData);
+  };
+
+  const getAllPortfolio = () => {
+    fetchPortfolio()
+      .then((fetchDataList) => {
+        setPortfolioDataList(fetchDataList);
+      })
+      .catch((error) => console.error('Error pages/contentsManager/fetchContents : ', error));
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPortfolioData((prevPortfolioData) => ({
+      ...prevPortfolioData,
+      [name]: value,
+    }));
+  };
+
+  const handleSelectChange = (e: SelectChangeEvent<unknown>) => {
+    const { name, value } = e.target;
+    setPortfolioData((prevPortfolioData) => ({
+      ...prevPortfolioData,
+      [name]: value === '표시' ? true : false,
+    }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.name;
+    const file = e.target.files?.[0] || null;
+    let uniqueFileName = '';
+    if (file) uniqueFileName = `${Date.now()}_${file.name}`;
+
+    setPortfolioData((prevPortfolioData) => ({
+      ...prevPortfolioData,
+      [name]: file,
+      [name + 'Name']: uniqueFileName,
+    }));
+  };
+
+  const moveItemUp = async (id: string) => {
+    try {
+      const itemIndex = portfolioDataList.findIndex((item) => item.portfolioId === id);
+      if (itemIndex > 0) {
+        const prevItem = portfolioDataList[itemIndex - 1];
+        const currentItem = portfolioDataList[itemIndex];
+        const prevNo = prevItem.portfolioNo;
+        const currentNo = currentItem.portfolioNo;
+        prevItem.portfolioNo = currentNo;
+        currentItem.portfolioNo = prevNo;
+        await updatePortfolio(prevItem);
+        await updatePortfolio(currentItem);
+        alert('수정이 완료됐습니다.');
+        getAllPortfolio();
+      }
+    } catch (error) {
+      console.error('Error pages/contentsManager/moveItemUp : ', error);
+    }
+  };
+
+  const moveItemDown = async (id: string) => {
+    try {
+      const itemIndex = portfolioDataList.findIndex((item) => item.portfolioId === id);
+      if (itemIndex < portfolioDataList.length - 1) {
+        const nextItem = portfolioDataList[itemIndex + 1];
+        const currentItem = portfolioDataList[itemIndex];
+        const nextNo = nextItem.portfolioNo;
+        const currentNo = currentItem.portfolioNo;
+        nextItem.portfolioNo = currentNo;
+        currentItem.portfolioNo = nextNo;
+        await updatePortfolio(nextItem);
+        await updatePortfolio(currentItem);
+        alert('수정이 완료됐습니다.');
+        getAllPortfolio();
+      }
+    } catch (error) {
+      console.error('Error pages/contentsManager/moveItemDown : ', error);
+    }
+  };
+
+  const handleCreateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await createPortfolio(portfolioData);
+      setPortfolioData(initPortfolioData);
+      getAllPortfolio();
+      handleClose();
+      alert('등록이 완료됐습니다.');
+    } catch (error) {
+      console.error('Error pages/contentsManager/handleCreateSubmit : ', error);
+    }
+  };
+
+  const handleUpdateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await updatePortfolio(portfolioData);
+      setPortfolioData(initPortfolioData);
+      getAllPortfolio();
+      handleClose();
+      alert('수정이 완료됐습니다.');
+    } catch (error) {
+      console.error('Error pages/contentsManager/handleUpdateSubmit : ', error);
+    }
+  };
+
+  const handleDeleteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await deletePortfolio(
+        portfolioData.portfolioId,
+        portfolioData.portfolioLogoName,
+        portfolioData.portfolioInvertedLogoName
+      );
+      setPortfolioData(initPortfolioData);
+      getAllPortfolio();
+      handleClose();
+      alert('삭제가 완료됐습니다.');
+    } catch (error) {
+      console.error('Error pages/contentsManager/handleDeleteSubmit : ', error);
+    }
   };
 
   return (
     <Box sx={{ mt: 6 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
         <Typography variant="h5">포트폴리오 관리</Typography>
-        <Button onClick={() => handleClickOpen('등록')} variant="contained">
+        <Button onClick={() => handleOpenCreateDialog()} variant="contained">
           등록
         </Button>
       </Stack>
@@ -64,25 +213,25 @@ function PortfolioManager() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {[1, 2, 3].map((result, index) => {
+            {portfolioDataList.map((result, index) => {
               return (
                 <TableRow hover key={index}>
-                  <TableCell align="center">{result}</TableCell>
+                  <TableCell align="center">{index + 1}</TableCell>
                   <TableCell align="center">
                     <Typography
-                      onClick={() => handleClickOpen('수정')}
+                      onClick={() => handleOpenUpdateDialog(result.portfolioId)}
                       sx={{ textDecoration: 'underline', cursor: 'pointer' }}
                     >
-                      회사명 표기공간으로 사용
+                      {result.portfolioCompanyName}
                     </Typography>
                   </TableCell>
-                  <TableCell align="center">노출</TableCell>
-                  <TableCell align="center">YYYY.MM.DD</TableCell>
+                  <TableCell align="center">{booleanToText(result.isEnabledPortfolio)}</TableCell>
+                  <TableCell align="center">{result.createdAt && formatDate(result.createdAt)}</TableCell>
                   <TableCell align="center">
-                    <Button variant="outlined" sx={{ mr: 1 }}>
+                    <Button variant="outlined" onClick={() => moveItemUp(result.portfolioId)} sx={{ mr: 1 }}>
                       <KeyboardArrowUpIcon />
                     </Button>
-                    <Button variant="outlined">
+                    <Button variant="outlined" onClick={() => moveItemDown(result.portfolioId)}>
                       <KeyboardArrowDownIcon />
                     </Button>
                   </TableCell>
@@ -103,9 +252,11 @@ function PortfolioManager() {
               <TextField
                 placeholder="회사명을 입력해주세요"
                 fullWidth
-                type="companyName"
+                type="text"
                 size="small"
-                onChange={() => {}}
+                name="portfolioCompanyName"
+                value={portfolioData.portfolioCompanyName}
+                onChange={handleInputChange}
               />
             </Grid>
             <Grid item xs={3}>
@@ -118,15 +269,25 @@ function PortfolioManager() {
               <TextField
                 placeholder="등록된 파일이 없습니다"
                 fullWidth
-                type="companyName"
+                type="text"
                 size="small"
-                onChange={() => {}}
+                value={uniqueFileNameToFileName(portfolioData.portfolioLogoName)}
+              />
+              <input
+                accept="image/*"
+                id="file-upload"
+                type="file"
+                name="portfolioLogo"
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
               />
             </Grid>
             <Grid item xs={2}>
-              <Button onChange={() => {}} variant="contained" size="small">
-                찾아보기
-              </Button>
+              <label htmlFor="file-upload">
+                <Button variant="contained" component="span" size="small">
+                  찾아보기
+                </Button>
+              </label>
             </Grid>
             <Grid item xs={3}>
               <Typography align="center">로고</Typography>
@@ -138,21 +299,36 @@ function PortfolioManager() {
               <TextField
                 placeholder="등록된 파일이 없습니다"
                 fullWidth
-                type="companyName"
+                type="text"
                 size="small"
-                onChange={() => {}}
+                value={uniqueFileNameToFileName(portfolioData.portfolioInvertedLogoName)}
+              />
+              <input
+                accept="image/*"
+                id="file-upload"
+                type="file"
+                name="portfolioInvertedLogo"
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
               />
             </Grid>
             <Grid item xs={2}>
-              <Button onChange={() => {}} variant="contained" size="small">
-                찾아보기
-              </Button>
+              <label htmlFor="file-upload">
+                <Button variant="contained" component="span" size="small">
+                  찾아보기
+                </Button>
+              </label>
             </Grid>
             <Grid item xs={3}>
               <Typography align="center">로고 배경 색상</Typography>
             </Grid>
             <Grid item xs={7}>
-              <MuiColorInput size="small" value={value} onChange={handleChange} />
+              <MuiColorInput
+                size="small"
+                value={portfolioData.logoBackground}
+                name="logoBackground"
+                onChange={handleColorChange}
+              />
             </Grid>
             <Grid item xs={3}>
               <Typography align="center">회사 설명</Typography>
@@ -161,42 +337,54 @@ function PortfolioManager() {
               <TextField
                 placeholder="회사 설명을 입력해주세요"
                 fullWidth
-                type="companyName"
+                type="text"
+                name="portfolioCompanyDescription"
                 size="small"
-                onChange={() => {}}
+                value={portfolioData.portfolioCompanyDescription}
+                onChange={handleInputChange}
               />
             </Grid>
             <Grid item xs={3}>
               <Typography align="center">포트폴리오 노출</Typography>
             </Grid>
             <Grid item xs={9}>
-              <Autocomplete
+              <Select
                 size="small"
-                options={[
-                  { label: 'On', id: 1 },
-                  { label: 'Off', id: 2 },
-                ]}
-                renderInput={(params) => <TextField {...params} />}
-              />
+                name="isEnabledPortfolio"
+                value={booleanToText(portfolioData.isEnabledPortfolio)}
+                onChange={handleSelectChange}
+              >
+                <MenuItem value={booleanToText(true)}>On</MenuItem>
+                <MenuItem value={booleanToText(false)}>Off</MenuItem>
+              </Select>
             </Grid>
             <Grid item xs={3}>
               <Typography align="center">메인페이지 노출</Typography>
             </Grid>
             <Grid item xs={9}>
-              <Autocomplete
+              <Select
                 size="small"
-                options={[
-                  { label: 'On', id: 1 },
-                  { label: 'Off', id: 2 },
-                ]}
-                renderInput={(params) => <TextField {...params} />}
-              />
+                name="isEnabledMainPage"
+                value={booleanToText(portfolioData.isEnabledMainPage)}
+                onChange={handleSelectChange}
+              >
+                <MenuItem value={booleanToText(true)}>On</MenuItem>
+                <MenuItem value={booleanToText(false)}>Off</MenuItem>
+              </Select>
             </Grid>
             <Grid item xs={3}>
               <Typography align="center">링크(URL)</Typography>
             </Grid>
             <Grid item xs={9}>
-              <TextField fullWidth type="companyName" size="small" onChange={() => {}} />
+              <TextField
+                placeholder="링크(URL)을 입력해주세요"
+                fullWidth
+                type="text"
+                size="small"
+                name="portfolioLink"
+                value={portfolioData.portfolioLink}
+                onChange={handleInputChange}
+              />
             </Grid>
             <Grid item xs={3}>
               <Typography align="center">카테고리</Typography>
@@ -205,9 +393,11 @@ function PortfolioManager() {
               <TextField
                 placeholder="카테고리를 입력해주세요"
                 fullWidth
-                type="companyName"
+                type="text"
                 size="small"
-                onChange={() => {}}
+                name="portfolioCategory"
+                value={portfolioData.portfolioCategory}
+                onChange={handleInputChange}
               />
             </Grid>
             {mode === '수정' && (
@@ -216,13 +406,23 @@ function PortfolioManager() {
                   <Typography align="center">최초등록일</Typography>
                 </Grid>
                 <Grid item xs={9}>
-                  <TextField fullWidth type="companyName" size="small" />
+                  <TextField
+                    fullWidth
+                    type="text"
+                    size="small"
+                    value={portfolioData.createdAt && formatDateTime(portfolioData.createdAt)}
+                  />
                 </Grid>
                 <Grid item xs={3}>
                   <Typography align="center">최초수정일</Typography>
                 </Grid>
                 <Grid item xs={9}>
-                  <TextField fullWidth type="companyName" size="small" />
+                  <TextField
+                    fullWidth
+                    type="text"
+                    size="small"
+                    value={portfolioData.updatedAt && formatDateTime(portfolioData.updatedAt)}
+                  />
                 </Grid>
               </>
             )}
@@ -230,15 +430,15 @@ function PortfolioManager() {
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center' }}>
           {mode === '등록' ? (
-            <Button onClick={() => {}} autoFocus variant="contained">
+            <Button onClick={handleCreateSubmit} autoFocus variant="contained">
               등록
             </Button>
           ) : (
             <>
-              <Button onClick={() => {}} autoFocus variant="contained">
+              <Button onClick={handleUpdateSubmit} autoFocus variant="contained">
                 수정
               </Button>
-              <Button onClick={() => {}} variant="contained">
+              <Button onClick={handleDeleteSubmit} variant="contained">
                 삭제
               </Button>
             </>

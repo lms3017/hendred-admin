@@ -110,7 +110,7 @@ function ContentsManager() {
         currentItem.contentsNo = prevNo;
         await updateContents(prevItem);
         await updateContents(currentItem);
-        alert('수정이 완료됬습니다.');
+        alert('수정이 완료됐습니다.');
         getAllContents();
       }
     } catch (error) {
@@ -130,7 +130,7 @@ function ContentsManager() {
         currentItem.contentsNo = nextNo;
         await updateContents(nextItem);
         await updateContents(currentItem);
-        alert('수정이 완료됬습니다.');
+        alert('수정이 완료됐습니다.');
         getAllContents();
       }
     } catch (error) {
@@ -145,7 +145,7 @@ function ContentsManager() {
       setContentsData(initContentsData);
       getAllContents();
       handleClose();
-      alert('등록이 완료됬습니다.');
+      alert('등록이 완료됐습니다.');
     } catch (error) {
       console.error('Error pages/contentsManager/handleCreateSubmit : ', error);
     }
@@ -158,7 +158,7 @@ function ContentsManager() {
       setContentsData(initContentsData);
       getAllContents();
       handleClose();
-      alert('수정이 완료됬습니다.');
+      alert('수정이 완료됐습니다.');
     } catch (error) {
       console.error('Error pages/contentsManager/handleUpdateSubmit : ', error);
     }
@@ -171,7 +171,7 @@ function ContentsManager() {
       setContentsData(initContentsData);
       getAllContents();
       handleClose();
-      alert('삭제가 완료됬습니다.');
+      alert('삭제가 완료됐습니다.');
     } catch (error) {
       console.error('Error pages/contentsManager/handleDeleteSubmit : ', error);
     }
@@ -265,7 +265,7 @@ function ContentsManager() {
             </Grid>
             <Grid item xs={2}>
               <label htmlFor="file-upload">
-                <Button variant="contained" component="span">
+                <Button variant="contained" component="span" size="small">
                   파일 추가
                 </Button>
               </label>
