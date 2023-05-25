@@ -10,6 +10,7 @@ import {
   orderBy,
   limit,
   setDoc,
+  where,
 } from 'firebase/firestore';
 import { db } from '@config/firebase';
 import { uploadImage, deleteImage } from '@services/firebase/storage/fileHandler';
@@ -60,6 +61,23 @@ export const fetchPortfolio = async (): Promise<PortfolioData[]> => {
     return result;
   } catch (error) {
     console.error('Error services/firebase/firestore/fetchPortfolio : ', error);
+    throw error;
+  }
+};
+
+export const fetchMainPage = async (): Promise<PortfolioData[]> => {
+  const q = query(collection(db, collectionName), where('isEnabledMainPage', '==', true), orderBy('mainPageNo', 'asc'));
+  try {
+    const querySnapshot = await getDocs(q);
+    let result: PortfolioData[] = [];
+
+    querySnapshot.forEach((doc) => {
+      const portfolioData: PortfolioData = doc.data() as PortfolioData;
+      result.push(portfolioData);
+    });
+    return result;
+  } catch (error) {
+    console.error('Error services/firebase/firestore/fetchMainPage : ', error);
     throw error;
   }
 };

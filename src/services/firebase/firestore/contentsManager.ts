@@ -41,7 +41,7 @@ export const createContents = async (contentsData: ContentsData) => {
 };
 
 export const fetchContents = async (): Promise<ContentsData[]> => {
-  const q = query(collection(db, collectionName), orderBy('nodeNo', 'asc'));
+  const q = query(collection(db, collectionName), orderBy('contentsNo', 'asc'));
   try {
     const querySnapshot = await getDocs(q);
     let result: ContentsData[] = [];
