@@ -12,7 +12,6 @@ const initPortfolioData: PortfolioData = {
   portfolioInvLogoName: '',
   portfolioInvLogo: null,
   logoBackground: 'rgb(255, 255, 255)',
-  portfolioCompanyDescription: '',
   isEnabledPortfolio: true,
   isEnabledMainPage: true,
   portfolioLink: '',

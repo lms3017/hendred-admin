@@ -14,7 +14,6 @@ type PortfolioData = {
   portfolioInvLogoName: string;
   portfolioInvLogo: File | null;
   logoBackground: string;
-  portfolioCompanyDescription: string;
   isEnabledPortfolio: boolean;
   isEnabledMainPage: boolean;
   portfolioLink: string;

@@ -348,20 +348,6 @@ function PortfolioManager() {
               />
             </Grid>
             <Grid item xs={3}>
-              <Typography align="center">회사 설명</Typography>
-            </Grid>
-            <Grid item xs={9}>
-              <TextField
-                placeholder="회사 설명을 입력해주세요"
-                fullWidth
-                type="text"
-                name="portfolioCompanyDescription"
-                size="small"
-                value={portfolioData.portfolioCompanyDescription}
-                onChange={handleInputChange}
-              />
-            </Grid>
-            <Grid item xs={3}>
               <Typography align="center">포트폴리오 노출</Typography>
             </Grid>
             <Grid item xs={9}>
