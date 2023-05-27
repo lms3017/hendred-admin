@@ -71,6 +71,8 @@ function ContentsManager() {
       setContentsDataList(fetchDataList);
       setIsLoading(false);
     } catch (error) {
+      setIsLoading(false);
+      alert('오류가 발생했습니다.');
       console.error('Error pages/contentsManager/fetchContents : ', error);
     }
   };
@@ -121,6 +123,8 @@ function ContentsManager() {
         setIsLoading(false);
       }
     } catch (error) {
+      setIsLoading(false);
+      alert('오류가 발생했습니다.');
       console.error('Error pages/contentsManager/moveItemUp : ', error);
     }
   };
@@ -142,6 +146,8 @@ function ContentsManager() {
         setIsLoading(false);
       }
     } catch (error) {
+      setIsLoading(false);
+      alert('오류가 발생했습니다.');
       console.error('Error pages/contentsManager/moveItemDown : ', error);
     }
   };
@@ -157,6 +163,8 @@ function ContentsManager() {
       alert('등록이 완료됐습니다.');
       setIsLoading(false);
     } catch (error) {
+      setIsLoading(false);
+      alert('오류가 발생했습니다.');
       console.error('Error pages/contentsManager/handleCreateSubmit : ', error);
     }
   };
@@ -173,6 +181,7 @@ function ContentsManager() {
       setContentsData(initContentsData);
       alert('수정이 완료됐습니다.');
       setIsLoading(false);
+      alert('오류가 발생했습니다.');
     } catch (error) {
       console.error('Error pages/contentsManager/handleUpdateSubmit : ', error);
     }
@@ -189,6 +198,7 @@ function ContentsManager() {
       alert('삭제가 완료됐습니다.');
       setIsLoading(false);
     } catch (error) {
+      alert('오류가 발생했습니다.');
       console.error('Error pages/contentsManager/handleDeleteSubmit : ', error);
     }
   };
@@ -223,7 +233,7 @@ function ContentsManager() {
                       onClick={() => handleOpenUpdateDialog(result.contentsId)}
                       sx={{ textDecoration: 'underline', cursor: 'pointer' }}
                     >
-                      {result.contentsName}
+                      {result.contentsName || '---'}
                     </Typography>
                   </TableCell>
                   <TableCell align="center">{booleanToText(result.isEnabledContents)}</TableCell>

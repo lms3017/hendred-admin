@@ -36,6 +36,7 @@ function MainPageManager() {
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
+      alert('오류가 발생했습니다.');
       console.error('Error pages/portfolioManager/getAllMainPage : ', error);
     }
   };
@@ -58,6 +59,7 @@ function MainPageManager() {
       }
     } catch (error) {
       setIsLoading(false);
+      alert('오류가 발생했습니다.');
       console.error('Error pages/portfolioManager/moveItemUp : ', error);
     }
   };
@@ -81,6 +83,7 @@ function MainPageManager() {
       }
     } catch (error) {
       setIsLoading(false);
+      alert('오류가 발생했습니다.');
       console.error('Error pages/portfolioManager/moveItemDown : ', error);
     }
   };

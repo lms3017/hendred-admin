@@ -66,6 +66,8 @@ function NodeManager() {
       setNodeDataList(fetchDataList);
       setIsLoading(false);
     } catch (error) {
+      setIsLoading(false);
+      alert('오류가 발생했습니다.');
       console.error('Error pages/nodeManager/fetchNode : ', error);
     }
   };
@@ -116,6 +118,8 @@ function NodeManager() {
         setIsLoading(false);
       }
     } catch (error) {
+      setIsLoading(false);
+      alert('오류가 발생했습니다.');
       console.error('Error pages/nodeManager/moveItemUp : ', error);
     }
   };
@@ -138,6 +142,8 @@ function NodeManager() {
         setIsLoading(false);
       }
     } catch (error) {
+      setIsLoading(false);
+      alert('오류가 발생했습니다.');
       console.error('Error pages/nodeManager/moveItemDown : ', error);
     }
   };
@@ -153,6 +159,8 @@ function NodeManager() {
       alert('등록이 완료됐습니다.');
       setIsLoading(false);
     } catch (error) {
+      setIsLoading(false);
+      alert('오류가 발생했습니다.');
       console.error('Error pages/nodeManager/handleCreateSubmit : ', error);
     }
   };
@@ -169,6 +177,8 @@ function NodeManager() {
       alert('수정이 완료됐습니다.');
       setIsLoading(false);
     } catch (error) {
+      setIsLoading(false);
+      alert('오류가 발생했습니다.');
       console.error('Error pages/nodeManager/handleUpdateSubmit : ', error);
     }
   };
@@ -218,7 +228,7 @@ function NodeManager() {
                       onClick={() => handleOpenUpdateDialog(result.nodeId)}
                       sx={{ textDecoration: 'underline', cursor: 'pointer' }}
                     >
-                      {result.nodeCompanyName}
+                      {result.nodeCompanyName || '---'}
                     </Typography>
                   </TableCell>
                   <TableCell align="center">{booleanToText(result.isEnabledNode)}</TableCell>

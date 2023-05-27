@@ -73,6 +73,7 @@ function PortfolioManager() {
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
+      alert('오류가 발생했습니다.');
       console.error('Error pages/portfolioManager/fetchPortfolio : ', error);
     }
   };
@@ -131,6 +132,7 @@ function PortfolioManager() {
       }
     } catch (error) {
       setIsLoading(false);
+      alert('오류가 발생했습니다.');
       console.error('Error pages/portfolioManager/moveItemUp : ', error);
     }
   };
@@ -154,6 +156,7 @@ function PortfolioManager() {
       }
     } catch (error) {
       setIsLoading(false);
+      alert('오류가 발생했습니다.');
       console.error('Error pages/portfolioManager/moveItemDown : ', error);
     }
   };
@@ -170,6 +173,7 @@ function PortfolioManager() {
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
+      alert('오류가 발생했습니다.');
       console.error('Error pages/portfolioManager/handleCreateSubmit : ', error);
     }
   };
@@ -189,6 +193,7 @@ function PortfolioManager() {
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
+      alert('오류가 발생했습니다.');
       console.error('Error pages/portfolioManager/handleUpdateSubmit : ', error);
     }
   };
@@ -205,6 +210,7 @@ function PortfolioManager() {
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
+      alert('오류가 발생했습니다.');
       console.error('Error pages/portfolioManager/handleDeleteSubmit : ', error);
     }
   };
@@ -239,7 +245,7 @@ function PortfolioManager() {
                       onClick={() => handleOpenUpdateDialog(result.portfolioId)}
                       sx={{ textDecoration: 'underline', cursor: 'pointer' }}
                     >
-                      {result.portfolioCompanyName}
+                      {result.portfolioCompanyName || '---'}
                     </Typography>
                   </TableCell>
                   <TableCell align="center">{booleanToText(result.isEnabledPortfolio)}</TableCell>
