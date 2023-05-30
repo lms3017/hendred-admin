@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Box,
-  Button,
-  Checkbox,
-  Container,
-  FormControlLabel,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Box, Button, Container, Stack, TextField, Typography } from '@mui/material';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@config/firebase';
 
@@ -32,20 +24,14 @@ function Login() {
         console.log('로그인 성공');
       })
       .catch((e) => {
+        alert('아이디, 패스워드를 확인해 주세요.');
         console.log(e);
       });
   };
 
   return (
     <Container component="main" maxWidth="xs">
-      <Box
-        sx={{
-          mt: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
+      <Stack justifyContent="center" alignItems="center" height="100vh">
         <Typography component="h1" variant="h5">
           관리자 로그인
         </Typography>
@@ -74,20 +60,11 @@ function Login() {
             onChange={handlePassword}
             value={password}
           />
-          <FormControlLabel
-            control={<Checkbox value="remember" color="primary" />}
-            label="Remember me"
-          />
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, mb: 2 }}
-          >
+          <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
             로그인
           </Button>
         </Box>
-      </Box>
+      </Stack>
     </Container>
   );
 }

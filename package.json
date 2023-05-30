@@ -16,10 +16,12 @@
     "@types/react": "^18.2.6",
     "@types/react-dom": "^18.2.4",
     "firebase": "^9.22.0",
+    "mui-color-input": "^1.0.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.11.1",
     "react-scripts": "5.0.1",
+    "react-uuid": "^2.0.0",
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
   },
@@ -28,7 +30,13 @@
     "build": "craco build",
     "test": "craco test",
     "deploy": "craco build && firebase deploy",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "start:dev": "REACT_APP_ENV=dev npm run _start",
+    "start:prod": "REACT_APP_ENV=prod npm run _start",
+    "deploy:dev": "REACT_APP_ENV=dev npm run _deploy",
+    "deploy:prod": "REACT_APP_ENV=prod npm run _deploy",
+    "_start": "sh -ac '. .env.${REACT_APP_ENV}; craco start'",
+    "_deploy": "sh -ac '. .env.${REACT_APP_ENV}; craco build && firebase use ${REACT_APP_ENV} && firebase deploy --only hosting:${REACT_APP_ENV}'"
   },
   "eslintConfig": {
     "extends": [

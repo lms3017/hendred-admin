@@ -6,7 +6,10 @@
       "@config/*": ["src/config/*"],
       "@pages/*": ["src/pages/*"],
       "@context/*": ["src/context/*"],
-      "@services/*": ["src/services/*"]
+      "@services/*": ["src/services/*"],
+      "@utils/*": ["src/utils/*"],
+      "@types": ["src/types"],
+      "@initData": ["src/initData"]
     }
   }
 }
